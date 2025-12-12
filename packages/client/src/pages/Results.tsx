@@ -9,6 +9,7 @@ import {
 import { Button, Card, Badge } from '@/components/ui';
 import { useOnboardingStore } from '@/stores/onboardingStore';
 import { useAuthStore } from '@/stores/authStore';
+import { onboardingAPI } from '@/services/api';
 
 // Mock generated itineraries
 const mockItineraries = [
@@ -107,15 +108,48 @@ export default function Results() {
   const [isLoading, setIsLoading] = useState(true);
   const [selectedItinerary, setSelectedItinerary] = useState<typeof mockItineraries[0] | null>(null);
   const [showLoginPrompt, setShowLoginPrompt] = useState(false);
+  const [generatedItineraries, setGeneratedItineraries] = useState<typeof mockItineraries>([]);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    // Simulate API call delay
-    const timer = setTimeout(() => {
-      setIsLoading(false);
-      setSelectedItinerary(mockItineraries[0]);
-    }, 2000);
-    return () => clearTimeout(timer);
-  }, []);
+    const generateItineraries = async () => {
+      setIsLoading(true);
+      setError(null);
+      
+      try {
+        // Try to call the real API
+        const response = await onboardingAPI.submit(answers);
+        const itineraries = response.data.data;
+        
+        if (itineraries && itineraries.length > 0) {
+          // Map API response to our format
+          const mapped = itineraries.map((it: any, idx: number) => ({
+            ...mockItineraries[idx % mockItineraries.length], // Use mock as base
+            id: it.id || `gen-${idx}`,
+            name: it.title || it.name,
+            description: it.tagline || it.description,
+            matchScore: it.matchScore || 85 - idx * 5,
+            highlights: it.highlights || mockItineraries[idx % mockItineraries.length].highlights,
+          }));
+          setGeneratedItineraries(mapped);
+          setSelectedItinerary(mapped[0]);
+        } else {
+          // Fallback to mock data
+          setGeneratedItineraries(mockItineraries);
+          setSelectedItinerary(mockItineraries[0]);
+        }
+      } catch (err) {
+        console.error('Failed to generate itineraries:', err);
+        // Fallback to mock data on error
+        setGeneratedItineraries(mockItineraries);
+        setSelectedItinerary(mockItineraries[0]);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    generateItineraries();
+  }, [answers]);
 
   const handleReroll = () => {
     reset();
@@ -228,7 +262,7 @@ export default function Results() {
               Generated Trips
             </h2>
             
-            {mockItineraries.map((itinerary, idx) => (
+            {(generatedItineraries.length > 0 ? generatedItineraries : mockItineraries).map((itinerary, idx) => (
               <motion.div
                 key={itinerary.id}
                 initial={{ opacity: 0, x: -20 }}

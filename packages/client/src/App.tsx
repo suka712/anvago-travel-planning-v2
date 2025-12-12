@@ -13,6 +13,7 @@ import Dashboard from '@/pages/Dashboard';
 import Plan from '@/pages/Plan';
 import Trip from '@/pages/Trip';
 import Admin from '@/pages/Admin';
+import Settings from '@/pages/Settings';
 import NotFound from '@/pages/NotFound';
 import AuthCallback from '@/pages/AuthCallback';
 
@@ -57,6 +58,7 @@ function App() {
         <Route path="/dashboard" element={<Dashboard />} />
         <Route path="/plan/:id" element={<Plan />} />
         <Route path="/trip/:id" element={<Trip />} />
+        <Route path="/settings" element={<Settings />} />
       </Route>
 
       {/* Admin routes */}

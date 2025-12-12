@@ -7,6 +7,8 @@ import {
   Bike, Car, Footprints, ArrowLeft
 } from 'lucide-react';
 import { Button, Card, Badge } from '@/components/ui';
+import { ShareModal } from '@/components/modals';
+import TripMap from '@/components/map/TripMap';
 
 // Mock itinerary data
 const mockItinerary = {
@@ -235,6 +237,20 @@ export default function Itinerary() {
   const navigate = useNavigate();
   const [isSaved, setIsSaved] = useState(false);
   const [activeDay, setActiveDay] = useState(1);
+  const [showShareModal, setShowShareModal] = useState(false);
+  const [showMapView, setShowMapView] = useState(false);
+
+  // Get locations for map
+  const mapLocations = mockItinerary.days
+    .flatMap(day => day.activities)
+    .filter(a => a.location)
+    .map(a => ({
+      id: a.id,
+      name: a.name,
+      lat: a.location?.lat || 16.0544,
+      lng: a.location?.lng || 108.2022,
+      type: a.type,
+    }));
 
   const formatCost = (cost: number) => {
     if (cost === 0) return 'Free';
@@ -276,10 +292,16 @@ export default function Itinerary() {
           >
             <Heart className={`w-5 h-5 ${isSaved ? 'fill-current' : ''}`} />
           </button>
-          <button className="p-2 bg-white/20 backdrop-blur-sm rounded-full hover:bg-white/30 transition-colors">
+          <button 
+            onClick={() => setShowShareModal(true)}
+            className="p-2 bg-white/20 backdrop-blur-sm rounded-full hover:bg-white/30 transition-colors"
+          >
             <Share2 className="w-5 h-5 text-white" />
           </button>
-          <button className="p-2 bg-white/20 backdrop-blur-sm rounded-full hover:bg-white/30 transition-colors">
+          <button 
+            onClick={() => setShowShareModal(true)}
+            className="p-2 bg-white/20 backdrop-blur-sm rounded-full hover:bg-white/30 transition-colors"
+          >
             <Download className="w-5 h-5 text-white" />
           </button>
         </div>
@@ -330,7 +352,12 @@ export default function Itinerary() {
                 Day {day.day}
               </button>
             ))}
-            <button className="px-4 py-2 rounded-lg font-medium bg-gray-100 text-gray-600 hover:bg-gray-200 flex items-center gap-1">
+            <button 
+              onClick={() => setShowMapView(!showMapView)}
+              className={`px-4 py-2 rounded-lg font-medium flex items-center gap-1 ${
+                showMapView ? 'bg-[#4FC3F7] text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+              }`}
+            >
               <Map className="w-4 h-4" />
               Map View
             </button>
@@ -476,6 +503,38 @@ export default function Itinerary() {
           </Button>
         </div>
       </div>
+
+      {/* Share Modal */}
+      <ShareModal
+        isOpen={showShareModal}
+        onClose={() => setShowShareModal(false)}
+        title={mockItinerary.name}
+        description={mockItinerary.description}
+        itineraryId={id}
+      />
+
+      {/* Map View Modal */}
+      {showMapView && (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+          <div className="w-full max-w-4xl h-[80vh] bg-white rounded-xl overflow-hidden">
+            <div className="h-full flex flex-col">
+              <div className="p-4 border-b flex items-center justify-between">
+                <h3 className="font-bold">Trip Map</h3>
+                <button onClick={() => setShowMapView(false)} className="p-2 hover:bg-gray-100 rounded-lg">
+                  <ArrowLeft className="w-5 h-5" />
+                </button>
+              </div>
+              <div className="flex-1">
+                <TripMap
+                  locations={mapLocations}
+                  showRoute
+                  className="h-full"
+                />
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

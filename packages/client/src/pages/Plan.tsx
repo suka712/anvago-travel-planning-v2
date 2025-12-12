@@ -6,8 +6,9 @@ import {
   Sparkles, Wand2, Star, Filter, X, Check, ChevronDown, ChevronUp,
   Bike, Car, Footprints, Sun, Cloud, Navigation, Lock, Crown
 } from 'lucide-react';
-import { Button, Card, Badge, Input, Modal } from '@/components/ui';
+import { Button, Card, Badge, Input } from '@/components/ui';
 import { useAuthStore } from '@/stores/authStore';
+import { PremiumModal } from '@/components/modals';
 
 interface ItineraryItem {
   id: string;
@@ -74,6 +75,8 @@ export default function Plan() {
   const [showOptimizeModal, setShowOptimizeModal] = useState(false);
   const [showSmartSearch, setShowSmartSearch] = useState<string | null>(null);
   const [selectedItem, setSelectedItem] = useState<ItineraryItem | null>(null);
+  const [showPremiumModal, setShowPremiumModal] = useState(false);
+  const [premiumFeature, setPremiumFeature] = useState('');
 
   const toggleDay = (day: number) => {
     setExpandedDays(prev => 
@@ -142,9 +145,15 @@ export default function Plan() {
             <Button
               variant="ghost"
               size="sm"
-              onClick={() => !isPremium ? null : setShowOptimizeModal(true)}
+              onClick={() => {
+                if (!isPremium) {
+                  setPremiumFeature('Go AI Optimization');
+                  setShowPremiumModal(true);
+                } else {
+                  setShowOptimizeModal(true);
+                }
+              }}
               leftIcon={<Wand2 className="w-4 h-4" />}
-              disabled={!isPremium}
               className="relative"
             >
               Go AI Optimize
@@ -154,7 +163,12 @@ export default function Plan() {
               variant="ghost"
               size="sm"
               leftIcon={<Star className="w-4 h-4" />}
-              disabled={!isPremium}
+              onClick={() => {
+                if (!isPremium) {
+                  setPremiumFeature('Localize by Anva');
+                  setShowPremiumModal(true);
+                }
+              }}
             >
               Localize by Anva
               {!isPremium && <Lock className="w-3 h-3 ml-1 text-gray-400" />}
@@ -163,13 +177,26 @@ export default function Plan() {
               variant="ghost"
               size="sm"
               leftIcon={<Search className="w-4 h-4" />}
-              disabled={!isPremium}
+              onClick={() => {
+                if (!isPremium) {
+                  setPremiumFeature('Smart Search');
+                  setShowPremiumModal(true);
+                }
+              }}
             >
               Smart Search
               {!isPremium && <Lock className="w-3 h-3 ml-1 text-gray-400" />}
             </Button>
             {!isPremium && (
-              <Button size="sm" variant="primary" className="ml-4">
+              <Button 
+                size="sm" 
+                variant="primary" 
+                className="ml-4"
+                onClick={() => {
+                  setPremiumFeature('');
+                  setShowPremiumModal(true);
+                }}
+              >
                 <Crown className="w-4 h-4 mr-1" />
                 Upgrade to Premium
               </Button>
@@ -454,6 +481,13 @@ export default function Plan() {
           </motion.div>
         )}
       </AnimatePresence>
+
+      {/* Premium Modal */}
+      <PremiumModal
+        isOpen={showPremiumModal}
+        onClose={() => setShowPremiumModal(false)}
+        feature={premiumFeature}
+      />
     </div>
   );
 }

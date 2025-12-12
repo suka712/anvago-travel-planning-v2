@@ -7,6 +7,7 @@ import {
 } from 'lucide-react';
 import { Button, Card, Badge } from '@/components/ui';
 import { useAuthStore } from '@/stores/authStore';
+import { PremiumModal } from '@/components/modals';
 
 const mockTrips = [
   {
@@ -50,6 +51,7 @@ export default function Dashboard() {
   const navigate = useNavigate();
   const { user, logout } = useAuthStore();
   const [activeTab, setActiveTab] = useState<'trips' | 'saved'>('trips');
+  const [showPremiumModal, setShowPremiumModal] = useState(false);
 
   const handleLogout = () => {
     logout();
@@ -83,7 +85,7 @@ export default function Dashboard() {
               <Button variant="ghost" size="sm">
                 <Bell className="w-5 h-5" />
               </Button>
-              <Button variant="ghost" size="sm">
+              <Button variant="ghost" size="sm" onClick={() => navigate('/settings')}>
                 <Settings className="w-5 h-5" />
               </Button>
               <Button variant="ghost" size="sm" onClick={handleLogout}>
@@ -283,7 +285,7 @@ export default function Dashboard() {
                 <p className="text-sm text-gray-600 mb-3">
                   Unlock AI optimization, smart search, local gems, and more!
                 </p>
-                <Button size="sm">
+                <Button size="sm" onClick={() => setShowPremiumModal(true)}>
                   Upgrade Now
                 </Button>
               </div>
@@ -291,6 +293,12 @@ export default function Dashboard() {
           </Card>
         )}
       </main>
+
+      {/* Premium Modal */}
+      <PremiumModal
+        isOpen={showPremiumModal}
+        onClose={() => setShowPremiumModal(false)}
+      />
     </div>
   );
 }

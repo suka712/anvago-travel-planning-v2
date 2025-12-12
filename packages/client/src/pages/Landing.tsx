@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { 
@@ -6,6 +7,7 @@ import {
   Bike, Coffee, Camera, Sunset
 } from 'lucide-react';
 import { Button, Card, Badge } from '@/components/ui';
+import { DemoModal } from '@/components/modals';
 
 const features = [
   {
@@ -71,8 +73,11 @@ const vibeIcons = [
 
 export default function Landing() {
   const navigate = useNavigate();
+  const [showDemo, setShowDemo] = useState(false);
 
   return (
+    <>
+      <DemoModal isOpen={showDemo} onClose={() => setShowDemo(false)} />
     <div className="min-h-screen bg-[#FAFAF8] overflow-hidden">
       {/* Hero Section */}
       <section className="relative min-h-screen flex items-center">
@@ -147,6 +152,7 @@ export default function Landing() {
                 variant="secondary" 
                 size="lg"
                 leftIcon={<Play className="w-5 h-5" />}
+                onClick={() => setShowDemo(true)}
               >
                 Watch Demo
               </Button>
@@ -405,6 +411,7 @@ export default function Landing() {
         </div>
       </footer>
     </div>
+    </>
   );
 }
 
