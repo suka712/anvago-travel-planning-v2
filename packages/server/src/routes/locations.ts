@@ -3,7 +3,10 @@ import { z } from 'zod';
 import { prisma } from '../config/database.js';
 import { optionalAuth } from '../middleware/auth.js';
 import { AppError } from '../middleware/errorHandler.js';
-import { DEFAULT_PAGE_SIZE, MAX_PAGE_SIZE } from '@anvago/shared';
+
+// Pagination constants
+const DEFAULT_PAGE_SIZE = 20;
+const MAX_PAGE_SIZE = 100;
 
 const router = Router();
 
