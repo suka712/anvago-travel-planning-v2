@@ -1,0 +1,363 @@
+// Anvago Database Schema
+// Prisma ORM with PostgreSQL
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ==================== USER & AUTH ====================
+
+model User {
+  id            String    @id @default(cuid())
+  email         String    @unique
+  passwordHash  String?   // Null for OAuth users
+  name          String
+  avatarUrl     String?
+  
+  // OAuth
+  googleId      String?   @unique
+  facebookId    String?   @unique
+  
+  // Subscription
+  isPremium     Boolean   @default(false)
+  premiumUntil  DateTime?
+  
+  // Admin
+  isAdmin       Boolean   @default(false)
+  
+  // Preferences (from onboarding)
+  preferences   UserPreferences?
+  
+  // Relations
+  itineraries   Itinerary[]
+  trips         Trip[]
+  bookings      MockBooking[]
+  
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+}
+
+model UserPreferences {
+  id                String   @id @default(cuid())
+  userId            String   @unique
+  user              User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  // Travel Style
+  personas          String[] // ["adventurer", "foodie", "culture_seeker"]
+  vibePreferences   String[] // ["beach", "mountain", "urban", "nature"]
+  interests         String[] // ["photography", "food", "history", "nightlife"]
+  
+  // Practical
+  budgetLevel       String   @default("moderate") // "budget", "moderate", "luxury"
+  mobilityLevel     String   @default("moderate") // "low", "moderate", "high"
+  groupSize         Int      @default(1)
+  
+  // Dietary/Special
+  dietaryRestrictions String[]
+  accessibilityNeeds  String[]
+  
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+}
+
+model RefreshToken {
+  id          String   @id @default(cuid())
+  token       String   @unique
+  userId      String
+  expiresAt   DateTime
+  createdAt   DateTime @default(now())
+  
+  @@index([userId])
+  @@index([expiresAt])
+}
+
+// ==================== LOCATIONS ====================
+
+model Location {
+  id              String   @id @default(cuid())
+  
+  // Basic Info
+  name            String
+  nameLocal       String?  // Vietnamese name
+  description     String   @db.Text
+  descriptionShort String  // For cards
+  
+  // Location Data
+  googlePlaceId   String?  @unique
+  latitude        Float
+  longitude       Float
+  address         String
+  city            String   @default("Danang")
+  
+  // Categorization
+  category        String   // "attraction", "restaurant", "cafe", etc.
+  subcategory     String?
+  tags            String[] // ["instagrammable", "local_favorite", "family_friendly"]
+  
+  // Media
+  imageUrl        String
+  images          String[] // Additional images
+  
+  // Metadata
+  priceLevel      Int      @default(2) // 1-4 ($ to $$$$)
+  rating          Float    @default(4.0)
+  reviewCount     Int      @default(0)
+  
+  // Time Info
+  avgDurationMins Int      @default(60) // Average time spent
+  openingHours    Json?    // { "monday": { "open": "09:00", "close": "17:00" }, ... }
+  
+  // Flags
+  isAnvaVerified  Boolean  @default(false) // "Anva Stamp of Authenticity"
+  isHiddenGem     Boolean  @default(false)
+  isPopular       Boolean  @default(false)
+  
+  // Relations
+  itineraryItems  ItineraryItem[]
+  
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  
+  @@index([city])
+  @@index([category])
+  @@index([isAnvaVerified])
+  @@index([isHiddenGem])
+}
+
+// ==================== ITINERARIES ====================
+
+model Itinerary {
+  id              String   @id @default(cuid())
+  
+  // Basic Info
+  title           String
+  description     String?  @db.Text
+  coverImage      String?
+  
+  // Configuration
+  city            String   @default("Danang")
+  durationDays    Int
+  startDate       DateTime?
+  
+  // User/System
+  userId          String?
+  user            User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+  isTemplate      Boolean  @default(false) // Pre-made templates
+  isPublic        Boolean  @default(false)
+  
+  // AI Generation Metadata
+  generatedBy     String?  // "ai", "user", "template"
+  generationPrompt String? @db.Text
+  
+  // Stats
+  estimatedBudget Float?
+  totalDistance   Float?   // in km
+  
+  // Relations
+  items           ItineraryItem[]
+  trips           Trip[]
+  template        ItineraryTemplate?
+  
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  
+  @@index([userId])
+  @@index([isTemplate])
+  @@index([city])
+}
+
+model ItineraryItem {
+  id              String   @id @default(cuid())
+  
+  // Relations
+  itineraryId     String
+  itinerary       Itinerary @relation(fields: [itineraryId], references: [id], onDelete: Cascade)
+  locationId      String
+  location        Location  @relation(fields: [locationId], references: [id])
+  
+  // Scheduling
+  dayNumber       Int      // 1, 2, 3...
+  orderIndex      Int      // Order within the day
+  startTime       String?  // "09:00"
+  endTime         String?  // "11:00"
+  
+  // Custom Fields
+  notes           String?  @db.Text
+  isOptional      Boolean  @default(false)
+  
+  // Transportation to next location
+  transportMode   String?  // "grab_bike", "grab_car", "walk", "cyclo", "taxi"
+  transportDuration Int?   // in minutes
+  transportCost   Float?
+  
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  
+  @@unique([itineraryId, dayNumber, orderIndex])
+  @@index([itineraryId])
+  @@index([locationId])
+}
+
+// ==================== TRIPS (Active Journeys) ====================
+
+model Trip {
+  id              String   @id @default(cuid())
+  
+  // Relations
+  userId          String
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  itineraryId     String
+  itinerary       Itinerary @relation(fields: [itineraryId], references: [id])
+  
+  // Status
+  status          String   @default("scheduled") // "scheduled", "active", "paused", "completed", "cancelled"
+  
+  // Timing
+  scheduledStart  DateTime
+  actualStart     DateTime?
+  completedAt     DateTime?
+  
+  // Progress
+  currentDayNumber Int     @default(1)
+  currentItemIndex Int     @default(0)
+  
+  // Live Tracking (mock data in demo)
+  lastLatitude    Float?
+  lastLongitude   Float?
+  lastUpdated     DateTime?
+  
+  // Stats
+  completedItems  Int      @default(0)
+  totalItems      Int      @default(0)
+  
+  // Relations
+  events          TripEvent[]
+  
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  
+  @@index([userId])
+  @@index([status])
+  @@index([scheduledStart])
+}
+
+model TripEvent {
+  id              String   @id @default(cuid())
+  
+  tripId          String
+  trip            Trip     @relation(fields: [tripId], references: [id], onDelete: Cascade)
+  
+  // Event Type
+  type            String   // "location_arrived", "location_departed", "transport_booked", etc.
+  
+  // Event Data
+  message         String
+  data            Json?    // Additional event-specific data
+  
+  timestamp       DateTime @default(now())
+  
+  @@index([tripId])
+  @@index([timestamp])
+}
+
+// ==================== TEMPLATES & RECOMMENDATIONS ====================
+
+model ItineraryTemplate {
+  id              String   @id @default(cuid())
+  
+  // Basic Info
+  name            String
+  description     String   @db.Text
+  coverImage      String
+  tagline         String?
+  
+  // Target
+  city            String   @default("Danang")
+  durationDays    Int
+  
+  // Matching Criteria
+  targetPersonas  String[] // Which personas this matches
+  targetVibes     String[]
+  targetBudget    String   // "budget", "moderate", "luxury"
+  targetInterests String[]
+  
+  // Content
+  highlights      String[] // Key selling points
+  badges          String[] // ["adventure", "local_favorite", etc.]
+  
+  // The actual itinerary
+  itineraryId     String   @unique
+  itinerary       Itinerary @relation(fields: [itineraryId], references: [id])
+  
+  // Display
+  displayOrder    Int      @default(0)
+  isActive        Boolean  @default(true)
+  
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  
+  @@index([city])
+  @@index([isActive])
+}
+
+// ==================== MOCK BOOKINGS ====================
+
+model MockBooking {
+  id              String   @id @default(cuid())
+  
+  userId          String
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tripId          String?
+  
+  // Booking Type
+  type            String   // "grab_bike", "grab_car", "hotel", "activity", "restaurant"
+  provider        String   // "grab", "booking_com", "klook", "agoda"
+  
+  // Details
+  title           String
+  details         Json
+  
+  // Status (for demo)
+  status          String   @default("confirmed") // "pending", "confirmed", "completed", "cancelled"
+  
+  // Pricing
+  price           Float
+  currency        String   @default("VND")
+  
+  // Timing
+  scheduledTime   DateTime?
+  
+  createdAt       DateTime @default(now())
+  
+  @@index([userId])
+  @@index([tripId])
+}
+
+// ==================== DEMO STATE ====================
+
+model DemoState {
+  id              String   @id @default("singleton")
+  
+  // Simulation
+  isActive        Boolean  @default(false)
+  speed           Int      @default(1) // 1, 2, 5, 10
+  simulatedTime   DateTime?
+  
+  // Current Demo
+  activeTripId    String?
+  activeUserId    String?
+  
+  // Weather Override
+  weatherOverride Json?
+  
+  // Traffic Override  
+  trafficOverride Json?
+  
+  updatedAt       DateTime @updatedAt
+}
+

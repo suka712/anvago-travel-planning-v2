@@ -1,0 +1,26 @@
+{
+  "name": "anvago-travel-planning",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Anvago - Travel the world your way",
+  "scripts": {
+    "dev": "turbo dev",
+    "build": "turbo build",
+    "lint": "turbo lint",
+    "clean": "turbo clean && rm -rf node_modules",
+    "db:generate": "pnpm --filter @anvago/server db:generate",
+    "db:push": "pnpm --filter @anvago/server db:push",
+    "db:migrate": "pnpm --filter @anvago/server db:migrate",
+    "db:seed": "pnpm --filter @anvago/server db:seed",
+    "db:studio": "pnpm --filter @anvago/server db:studio"
+  },
+  "devDependencies": {
+    "turbo": "^2.3.3",
+    "typescript": "^5.7.2"
+  },
+  "packageManager": "pnpm@9.15.0",
+  "engines": {
+    "node": ">=20.0.0"
+  }
+}
+

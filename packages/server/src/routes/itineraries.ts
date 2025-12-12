@@ -1,0 +1,533 @@
+import { Router } from 'express';
+import { z } from 'zod';
+import { prisma } from '../config/database.js';
+import { requireAuth, optionalAuth, requirePremium } from '../middleware/auth.js';
+import { AppError } from '../middleware/errorHandler.js';
+import { generateItinerary, optimizeItinerary, localizeItinerary } from '../services/ai.js';
+
+const router = Router();
+
+// Schemas
+const createItinerarySchema = z.object({
+  title: z.string().min(1),
+  description: z.string().optional(),
+  city: z.string().default('Danang'),
+  durationDays: z.number().min(1).max(14),
+  startDate: z.string().datetime().optional(),
+});
+
+const addItemSchema = z.object({
+  locationId: z.string(),
+  dayNumber: z.number().min(1),
+  orderIndex: z.number().min(0),
+  startTime: z.string().optional(),
+  endTime: z.string().optional(),
+  notes: z.string().optional(),
+  transportMode: z.string().optional(),
+});
+
+const reorderItemsSchema = z.object({
+  items: z.array(z.object({
+    id: z.string(),
+    dayNumber: z.number(),
+    orderIndex: z.number(),
+  })),
+});
+
+// GET /itineraries/templates
+router.get('/templates', async (req, res, next) => {
+  try {
+    const city = (req.query.city as string) || 'Danang';
+    
+    const templates = await prisma.itineraryTemplate.findMany({
+      where: { city, isActive: true },
+      include: {
+        itinerary: {
+          include: {
+            items: {
+              include: { location: true },
+              orderBy: [{ dayNumber: 'asc' }, { orderIndex: 'asc' }],
+            },
+          },
+        },
+      },
+      orderBy: { displayOrder: 'asc' },
+    });
+
+    res.json({
+      success: true,
+      data: templates,
+    });
+  } catch (error) {
+    next(error);
+  }
+});
+
+// POST /itineraries/generate
+router.post('/generate', optionalAuth, async (req, res, next) => {
+  try {
+    const preferences = req.body;
+    
+    const result = await generateItinerary(preferences);
+    
+    res.json({
+      success: true,
+      data: result,
+    });
+  } catch (error) {
+    next(error);
+  }
+});
+
+// GET /itineraries (user's itineraries)
+router.get('/', requireAuth, async (req, res, next) => {
+  try {
+    const itineraries = await prisma.itinerary.findMany({
+      where: { userId: req.user!.id },
+      include: {
+        items: {
+          include: { location: true },
+          orderBy: [{ dayNumber: 'asc' }, { orderIndex: 'asc' }],
+        },
+      },
+      orderBy: { updatedAt: 'desc' },
+    });
+
+    res.json({
+      success: true,
+      data: itineraries,
+    });
+  } catch (error) {
+    next(error);
+  }
+});
+
+// POST /itineraries
+router.post('/', requireAuth, async (req, res, next) => {
+  try {
+    const data = createItinerarySchema.parse(req.body);
+    
+    const itinerary = await prisma.itinerary.create({
+      data: {
+        ...data,
+        userId: req.user!.id,
+        startDate: data.startDate ? new Date(data.startDate) : null,
+        generatedBy: 'user',
+      },
+      include: {
+        items: {
+          include: { location: true },
+        },
+      },
+    });
+
+    res.status(201).json({
+      success: true,
+      data: itinerary,
+    });
+  } catch (error) {
+    next(error);
+  }
+});
+
+// GET /itineraries/:id
+router.get('/:id', optionalAuth, async (req, res, next) => {
+  try {
+    const itinerary = await prisma.itinerary.findUnique({
+      where: { id: req.params.id },
+      include: {
+        items: {
+          include: { location: true },
+          orderBy: [{ dayNumber: 'asc' }, { orderIndex: 'asc' }],
+        },
+        user: {
+          select: { id: true, name: true, avatarUrl: true },
+        },
+      },
+    });
+
+    if (!itinerary) {
+      throw AppError.notFound('Itinerary not found');
+    }
+
+    // Check access
+    if (!itinerary.isPublic && !itinerary.isTemplate) {
+      if (!req.user || itinerary.userId !== req.user.id) {
+        throw AppError.forbidden('Access denied');
+      }
+    }
+
+    res.json({
+      success: true,
+      data: itinerary,
+    });
+  } catch (error) {
+    next(error);
+  }
+});
+
+// PATCH /itineraries/:id
+router.patch('/:id', requireAuth, async (req, res, next) => {
+  try {
+    const itinerary = await prisma.itinerary.findUnique({
+      where: { id: req.params.id },
+    });
+
+    if (!itinerary) {
+      throw AppError.notFound('Itinerary not found');
+    }
+
+    if (itinerary.userId !== req.user!.id) {
+      throw AppError.forbidden('Access denied');
+    }
+
+    const updated = await prisma.itinerary.update({
+      where: { id: req.params.id },
+      data: req.body,
+      include: {
+        items: {
+          include: { location: true },
+          orderBy: [{ dayNumber: 'asc' }, { orderIndex: 'asc' }],
+        },
+      },
+    });
+
+    res.json({
+      success: true,
+      data: updated,
+    });
+  } catch (error) {
+    next(error);
+  }
+});
+
+// DELETE /itineraries/:id
+router.delete('/:id', requireAuth, async (req, res, next) => {
+  try {
+    const itinerary = await prisma.itinerary.findUnique({
+      where: { id: req.params.id },
+    });
+
+    if (!itinerary) {
+      throw AppError.notFound('Itinerary not found');
+    }
+
+    if (itinerary.userId !== req.user!.id) {
+      throw AppError.forbidden('Access denied');
+    }
+
+    await prisma.itinerary.delete({
+      where: { id: req.params.id },
+    });
+
+    res.json({
+      success: true,
+      data: { message: 'Itinerary deleted' },
+    });
+  } catch (error) {
+    next(error);
+  }
+});
+
+// POST /itineraries/:id/duplicate
+router.post('/:id/duplicate', requireAuth, async (req, res, next) => {
+  try {
+    const original = await prisma.itinerary.findUnique({
+      where: { id: req.params.id },
+      include: { items: true },
+    });
+
+    if (!original) {
+      throw AppError.notFound('Itinerary not found');
+    }
+
+    // Create duplicate
+    const duplicate = await prisma.itinerary.create({
+      data: {
+        title: `${original.title} (Copy)`,
+        description: original.description,
+        city: original.city,
+        durationDays: original.durationDays,
+        coverImage: original.coverImage,
+        userId: req.user!.id,
+        generatedBy: 'user',
+        items: {
+          create: original.items.map(item => ({
+            locationId: item.locationId,
+            dayNumber: item.dayNumber,
+            orderIndex: item.orderIndex,
+            startTime: item.startTime,
+            endTime: item.endTime,
+            notes: item.notes,
+            transportMode: item.transportMode,
+            transportDuration: item.transportDuration,
+            transportCost: item.transportCost,
+          })),
+        },
+      },
+      include: {
+        items: {
+          include: { location: true },
+          orderBy: [{ dayNumber: 'asc' }, { orderIndex: 'asc' }],
+        },
+      },
+    });
+
+    res.status(201).json({
+      success: true,
+      data: duplicate,
+    });
+  } catch (error) {
+    next(error);
+  }
+});
+
+// POST /itineraries/:id/optimize (Premium)
+router.post('/:id/optimize', requirePremium, async (req, res, next) => {
+  try {
+    const { criterion } = req.body;
+    
+    const itinerary = await prisma.itinerary.findUnique({
+      where: { id: req.params.id },
+      include: {
+        items: {
+          include: { location: true },
+          orderBy: [{ dayNumber: 'asc' }, { orderIndex: 'asc' }],
+        },
+      },
+    });
+
+    if (!itinerary) {
+      throw AppError.notFound('Itinerary not found');
+    }
+
+    if (itinerary.userId !== req.user!.id) {
+      throw AppError.forbidden('Access denied');
+    }
+
+    const result = await optimizeItinerary(itinerary, criterion);
+    
+    res.json({
+      success: true,
+      data: result,
+    });
+  } catch (error) {
+    next(error);
+  }
+});
+
+// POST /itineraries/:id/localize (Premium)
+router.post('/:id/localize', requirePremium, async (req, res, next) => {
+  try {
+    const itinerary = await prisma.itinerary.findUnique({
+      where: { id: req.params.id },
+      include: {
+        items: {
+          include: { location: true },
+          orderBy: [{ dayNumber: 'asc' }, { orderIndex: 'asc' }],
+        },
+      },
+    });
+
+    if (!itinerary) {
+      throw AppError.notFound('Itinerary not found');
+    }
+
+    if (itinerary.userId !== req.user!.id) {
+      throw AppError.forbidden('Access denied');
+    }
+
+    const suggestions = await localizeItinerary(itinerary);
+    
+    res.json({
+      success: true,
+      data: suggestions,
+    });
+  } catch (error) {
+    next(error);
+  }
+});
+
+// === Item Routes ===
+
+// POST /itineraries/:id/items
+router.post('/:id/items', requireAuth, async (req, res, next) => {
+  try {
+    const data = addItemSchema.parse(req.body);
+    
+    const itinerary = await prisma.itinerary.findUnique({
+      where: { id: req.params.id },
+    });
+
+    if (!itinerary) {
+      throw AppError.notFound('Itinerary not found');
+    }
+
+    if (itinerary.userId !== req.user!.id) {
+      throw AppError.forbidden('Access denied');
+    }
+
+    const item = await prisma.itineraryItem.create({
+      data: {
+        ...data,
+        itineraryId: req.params.id,
+      },
+      include: { location: true },
+    });
+
+    res.status(201).json({
+      success: true,
+      data: item,
+    });
+  } catch (error) {
+    next(error);
+  }
+});
+
+// PATCH /itineraries/:id/items/:itemId
+router.patch('/:id/items/:itemId', requireAuth, async (req, res, next) => {
+  try {
+    const itinerary = await prisma.itinerary.findUnique({
+      where: { id: req.params.id },
+    });
+
+    if (!itinerary || itinerary.userId !== req.user!.id) {
+      throw AppError.forbidden('Access denied');
+    }
+
+    const item = await prisma.itineraryItem.update({
+      where: { id: req.params.itemId },
+      data: req.body,
+      include: { location: true },
+    });
+
+    res.json({
+      success: true,
+      data: item,
+    });
+  } catch (error) {
+    next(error);
+  }
+});
+
+// DELETE /itineraries/:id/items/:itemId
+router.delete('/:id/items/:itemId', requireAuth, async (req, res, next) => {
+  try {
+    const itinerary = await prisma.itinerary.findUnique({
+      where: { id: req.params.id },
+    });
+
+    if (!itinerary || itinerary.userId !== req.user!.id) {
+      throw AppError.forbidden('Access denied');
+    }
+
+    await prisma.itineraryItem.delete({
+      where: { id: req.params.itemId },
+    });
+
+    res.json({
+      success: true,
+      data: { message: 'Item removed' },
+    });
+  } catch (error) {
+    next(error);
+  }
+});
+
+// POST /itineraries/:id/items/reorder
+router.post('/:id/items/reorder', requireAuth, async (req, res, next) => {
+  try {
+    const { items } = reorderItemsSchema.parse(req.body);
+    
+    const itinerary = await prisma.itinerary.findUnique({
+      where: { id: req.params.id },
+    });
+
+    if (!itinerary || itinerary.userId !== req.user!.id) {
+      throw AppError.forbidden('Access denied');
+    }
+
+    // Update all items in a transaction
+    await prisma.$transaction(
+      items.map(item => 
+        prisma.itineraryItem.update({
+          where: { id: item.id },
+          data: {
+            dayNumber: item.dayNumber,
+            orderIndex: item.orderIndex,
+          },
+        })
+      )
+    );
+
+    const updated = await prisma.itinerary.findUnique({
+      where: { id: req.params.id },
+      include: {
+        items: {
+          include: { location: true },
+          orderBy: [{ dayNumber: 'asc' }, { orderIndex: 'asc' }],
+        },
+      },
+    });
+
+    res.json({
+      success: true,
+      data: updated,
+    });
+  } catch (error) {
+    next(error);
+  }
+});
+
+// GET /itineraries/:id/items/:itemId/alternatives
+router.get('/:id/items/:itemId/alternatives', requireAuth, async (req, res, next) => {
+  try {
+    const item = await prisma.itineraryItem.findUnique({
+      where: { id: req.params.itemId },
+      include: { location: true },
+    });
+
+    if (!item) {
+      throw AppError.notFound('Item not found');
+    }
+
+    const { type } = req.query; // 'category', 'price', 'area', 'rating'
+    
+    const where: any = {
+      id: { not: item.locationId },
+      city: item.location.city,
+    };
+
+    switch (type) {
+      case 'category':
+        where.category = item.location.category;
+        break;
+      case 'price':
+        where.priceLevel = item.location.priceLevel;
+        break;
+      case 'area':
+        // Within ~2km
+        where.latitude = { gte: item.location.latitude - 0.02, lte: item.location.latitude + 0.02 };
+        where.longitude = { gte: item.location.longitude - 0.02, lte: item.location.longitude + 0.02 };
+        break;
+      default:
+        where.category = item.location.category;
+    }
+
+    const alternatives = await prisma.location.findMany({
+      where,
+      take: 10,
+      orderBy: { rating: 'desc' },
+    });
+
+    res.json({
+      success: true,
+      data: alternatives,
+    });
+  } catch (error) {
+    next(error);
+  }
+});
+
+export default router;
+
