@@ -58,7 +58,7 @@ export default function PremiumModal({ isOpen, onClose, feature }: PremiumModalP
         >
           <Card className="overflow-hidden">
             {/* Header with gradient */}
-            <div className="relative bg-gradient-to-br from-purple-500 via-pink-500 to-orange-400 text-white p-8 -m-6 mb-6">
+            <div className="relative bg-linear-to-br from-sky-700 via-cyan-500 to-cyan-400 text-white p-8 -m-6 mb-6">
               <button
                 onClick={onClose}
                 className="absolute top-4 right-4 p-2 hover:bg-white/20 rounded-full transition-colors"

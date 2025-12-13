@@ -515,7 +515,7 @@ export default function Plan() {
                     className="w-full p-3 rounded-lg border-2 border-gray-200 hover:border-sky-primary hover:bg-sky-primary/5 transition-all text-left"
                   >
                     <div className="flex items-center gap-3">
-                      <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-purple-500 to-indigo-600 flex items-center justify-center flex-shrink-0">
+                      <div className="w-9 h-9 rounded-lg bg-linear-to-br from-sky-500 to-sky-200 flex items-center justify-center flex-shrink-0">
                         <Wand2 className="w-4 h-4 text-white" />
                       </div>
                       <div className="flex-1 min-w-0">
@@ -539,7 +539,7 @@ export default function Plan() {
                     className="w-full p-3 rounded-lg border-2 border-gray-200 hover:border-[#4FC3F7] hover:bg-[#4FC3F7]/5 transition-all text-left"
                   >
                     <div className="flex items-center gap-3">
-                      <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-amber-500 to-orange-600 flex items-center justify-center flex-shrink-0">
+                      <div className="w-9 h-9 rounded-lg bg-linear-to-br from-sky-500 to-purple-200 flex items-center justify-center flex-shrink-0">
                         <Star className="w-4 h-4 text-white" />
                       </div>
                       <div className="flex-1 min-w-0">
@@ -563,7 +563,7 @@ export default function Plan() {
                     className="w-full p-3 rounded-lg border-2 border-gray-200 hover:border-[#4FC3F7] hover:bg-[#4FC3F7]/5 transition-all text-left"
                   >
                     <div className="flex items-center gap-3">
-                      <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-cyan-500 to-blue-600 flex items-center justify-center flex-shrink-0">
+                      <div className="w-9 h-9 rounded-lg bg-linear-to-br from-sky-500 to-teal-100 flex items-center justify-center flex-shrink-0">
                         <Search className="w-4 h-4 text-white" />
                       </div>
                       <div className="flex-1 min-w-0">
