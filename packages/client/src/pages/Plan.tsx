@@ -457,7 +457,7 @@ export default function Plan() {
                       </Reorder.Group>
 
                       {/* Add to Day Button */}
-                      <div className="p-4 border-t bg-gray-50">
+                      <div className="p-4 border-t">
                         <Button
                           variant="ghost"
                           onClick={() => setShowSearch(true)}
