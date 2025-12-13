@@ -113,8 +113,6 @@ export default function InterestsStep() {
           </motion.div>
         ))}
       </div>
-
-      
     </div>
   );
 }
