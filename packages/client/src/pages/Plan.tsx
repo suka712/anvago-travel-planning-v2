@@ -280,7 +280,7 @@ export default function Plan() {
 
                   {/* Day time summary */}
                   <div className="flex items-center gap-4">
-                    <div className="flex items-center gap-2 rounded-3xl px-3 py-2 hover:bg-sky-50">
+                    <div className="flex items-center gap-2 rounded-3xl px-3 py-2 hover:bg-gray-100">
                       <button
                         onClick={(e) => { e.stopPropagation(); handleAdjustStartTime(dayIndex, -30); }}
                         className="w-6 h-6 flex items-center justify-center rounded-full bg-white border border-gray-300 hover:bg-sky-50 text-gray-600"
@@ -339,18 +339,18 @@ export default function Plan() {
                             >
                               <div className="flex group">
                                 {/* Timeline Column */}
-                                <div className="flex flex-col items-center w-20 flex-shrink-0 py-3">
+                                <div className="flex flex-col items-center w-20 shrink-0 py-3">
                                   {/* Start Time */}
                                   <div className="text-center mb-2">
-                                    <span className="font-mono text-xs font-medium text-[#4FC3F7]">
+                                    <span className="font-mono text-xs font-medium text-sky-primary">
                                       {formatTime(times.start)}
                                     </span>
                                   </div>
 
                                   {/* Timeline dot and line */}
                                   <div className="flex flex-col items-center flex-1">
-                                    <div className="w-3 h-3 rounded-full bg-[#4FC3F7] border-2 border-white shadow-sm" />
-                                    <div className="w-0.5 flex-1 bg-[#4FC3F7]/30 my-1" />
+                                    <div className="w-3 h-3 rounded-full bg-sky-primary border-2 border-white shadow-sm" />
+                                    <div className="w-0.5 flex-1 bg-sky-primary/30 my-1" />
                                   </div>
 
                                   {/* End Time */}
@@ -363,14 +363,14 @@ export default function Plan() {
 
                                 {/* Activity Card */}
                                 <div className="flex-1 py-3 pr-4">
-                                  <div className="flex items-stretch gap-3 p-3 rounded-xl border-2 border-gray-200 hover:border-[#4FC3F7] transition-all bg-white hover:shadow-md">
+                                  <div className="flex items-stretch gap-3 p-3 rounded-xl border-2 border-gray-200 hover:border-sky-primary transition-all bg-white hover:shadow-md">
                                     {/* Drag Handle */}
                                     <div className="flex items-center cursor-grab active:cursor-grabbing text-gray-300 hover:text-gray-500 transition-colors">
                                       <GripVertical className="w-5 h-5" />
                                     </div>
 
                                     {/* Image */}
-                                    <div className="w-20 h-20 rounded-lg overflow-hidden flex-shrink-0 border-2 border-gray-100">
+                                    <div className="w-20 h-20 rounded-lg overflow-hidden shrink-0 border-2 border-gray-100">
                                       <img src={item.image} alt={item.name} className="w-full h-full object-cover" />
                                     </div>
 
@@ -403,17 +403,17 @@ export default function Plan() {
                                     <div className="flex flex-col items-center justify-center px-2 border-l border-gray-100">
                                       <button
                                         onClick={() => handleAdjustDuration(dayIndex, item.id, 15)}
-                                        className="w-7 h-7 flex items-center justify-center rounded-full hover:bg-[#4FC3F7]/10 text-gray-400 hover:text-[#4FC3F7] transition-colors"
+                                        className="w-7 h-7 flex items-center justify-center rounded-full hover:bg-sky-primary/10 text-gray-400 hover:text-sky-primary transition-colors"
                                       >
                                         <Plus className="w-4 h-4" />
                                       </button>
                                       <div className="text-center my-1">
-                                        <Clock className="w-4 h-4 text-[#4FC3F7] mx-auto mb-0.5" />
+                                        <Clock className="w-4 h-4 text-sky-primary mx-auto mb-0.5" />
                                         <span className="font-mono text-sm font-medium">{formatDuration(item.durationMins)}</span>
                                       </div>
                                       <button
                                         onClick={() => handleAdjustDuration(dayIndex, item.id, -15)}
-                                        className="w-7 h-7 flex items-center justify-center rounded-full hover:bg-[#4FC3F7]/10 text-gray-400 hover:text-[#4FC3F7] transition-colors"
+                                        className="w-7 h-7 flex items-center justify-center rounded-full hover:bg-sky-primary/10 text-gray-400 hover:text-sky-primary transition-colors"
                                       >
                                         <Minus className="w-4 h-4" />
                                       </button>
@@ -461,7 +461,7 @@ export default function Plan() {
                           variant="ghost"
                           onClick={() => setShowSearch(true)}
                           leftIcon={<Plus className="w-4 h-4" />}
-                          className="w-full border-2 border-dashed border-gray-300 hover:border-[#4FC3F7]"
+                          className="w-full border-2 border-dashed border-gray-300 hover:border-sky-primary"
                         >
                           Add activity to Day {day.day}
                         </Button>
@@ -489,7 +489,7 @@ export default function Plan() {
               <Card>
                 <div className="flex items-center justify-between mb-4">
                   <h2 className="font-bold text-lg flex items-center gap-2">
-                    <Sparkles className="w-5 h-5 text-[#4FC3F7]" />
+                    <Sparkles className="w-5 h-5 text-sky-primary" />
                     Optimizations
                   </h2>
                   {!isPremium && (
@@ -512,7 +512,7 @@ export default function Plan() {
                         setShowOptimizeModal(true);
                       }
                     }}
-                    className="w-full p-3 rounded-lg border-2 border-gray-200 hover:border-[#4FC3F7] hover:bg-[#4FC3F7]/5 transition-all text-left"
+                    className="w-full p-3 rounded-lg border-2 border-gray-200 hover:border-sky-primary hover:bg-sky-primary/5 transition-all text-left"
                   >
                     <div className="flex items-center gap-3">
                       <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-purple-500 to-indigo-600 flex items-center justify-center flex-shrink-0">
