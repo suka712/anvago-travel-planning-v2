@@ -56,7 +56,7 @@ export default function DurationStep() {
               hoverable
               className={`cursor-pointer text-center relative ${
                 selected === duration.value && isPreset
-                  ? 'bg-sky-300'
+                  ? 'bg-sky-300!'
                   : ''
               }`}
               onClick={() => {
