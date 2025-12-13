@@ -2,8 +2,8 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import {
-  User, Mail, Lock, Bell, Globe, Crown, CreditCard, LogOut,
-  ChevronRight, Check, Camera, Trash2, Shield, Moon, Sun
+  User, Mail, Lock, Bell, Globe, Crown, LogOut,
+  Check, Camera, Trash2, Moon, Sun
 } from 'lucide-react';
 import { Button, Card, Input, Badge } from '@/components/ui';
 import { useAuthStore } from '@/stores/authStore';

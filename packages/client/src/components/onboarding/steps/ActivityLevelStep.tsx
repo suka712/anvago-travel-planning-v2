@@ -75,7 +75,7 @@ export default function ActivityLevelStep() {
                 className={`cursor-pointer text-center relative overflow-hidden h-full ${
                   isSelected ? 'bg-[#4FC3F7]/5' : ''
                 }`}
-                onClick={() => setAnswer('activityLevel', level.id)}
+                onClick={() => setAnswer('activityLevel', level.id as 'chill' | 'balanced' | 'packed')}
               >
                 {/* Gradient Background */}
                 <div 

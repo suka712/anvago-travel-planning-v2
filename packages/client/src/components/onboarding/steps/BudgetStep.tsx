@@ -70,8 +70,7 @@ export default function BudgetStep() {
       <div className="grid md:grid-cols-3 gap-4 mb-8">
         {budgetLevels.map((level, index) => {
           const isSelected = selected === level.id;
-          const tripTotal = level.avgDaily * duration;
-          
+
           return (
             <motion.div
               key={level.id}
@@ -84,7 +83,7 @@ export default function BudgetStep() {
                 className={`cursor-pointer text-center relative overflow-hidden h-full ${
                   isSelected ? 'bg-[#4FC3F7]/5' : ''
                 }`}
-                onClick={() => setAnswer('budgetLevel', level.id)}
+                onClick={() => setAnswer('budgetLevel', level.id as 'budget' | 'moderate' | 'luxury')}
               >
                 {/* Gradient Background */}
                 <div 

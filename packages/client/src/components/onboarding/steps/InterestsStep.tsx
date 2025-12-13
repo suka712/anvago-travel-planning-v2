@@ -1,6 +1,5 @@
 import { motion } from 'framer-motion';
 import { Target } from 'lucide-react';
-import { Card } from '@/components/ui';
 import { useOnboardingStore } from '@/stores/onboardingStore';
 
 const interestCategories = [

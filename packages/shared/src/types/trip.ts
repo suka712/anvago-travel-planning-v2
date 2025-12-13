@@ -1,6 +1,6 @@
 // Trip Types (Active Journey)
 
-import type { Itinerary } from './itinerary';
+import type { Itinerary } from './itinerary.js';
 
 export interface Trip {
   id: string;

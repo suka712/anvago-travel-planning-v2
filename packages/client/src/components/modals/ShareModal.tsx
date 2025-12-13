@@ -137,7 +137,7 @@ export default function ShareModal({
             <div className="mb-6">
               <label className="block text-sm font-medium mb-3">Share via</label>
               <div className="grid grid-cols-4 gap-3">
-                {navigator.share && (
+                {'share' in navigator && (
                   <button
                     onClick={() => handleShare('native')}
                     className="flex flex-col items-center gap-2 p-3 rounded-xl hover:bg-gray-100 transition-colors"

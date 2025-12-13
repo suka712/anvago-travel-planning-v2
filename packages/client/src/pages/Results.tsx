@@ -1,10 +1,10 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { 
-  Sparkles, RefreshCw, Map, Clock, DollarSign, Sun, Cloud, 
+import {
+  Sparkles, RefreshCw, Map, Clock, DollarSign, Cloud,
   ChevronRight, MapPin, Star, Calendar, Bike, Car, Footprints,
-  Lock, Heart
+  Lock
 } from 'lucide-react';
 import { Button, Card, Badge } from '@/components/ui';
 import { useOnboardingStore } from '@/stores/onboardingStore';
@@ -109,7 +109,7 @@ export default function Results() {
   const [selectedItinerary, setSelectedItinerary] = useState<typeof mockItineraries[0] | null>(null);
   const [showLoginPrompt, setShowLoginPrompt] = useState(false);
   const [generatedItineraries, setGeneratedItineraries] = useState<typeof mockItineraries>([]);
-  const [error, setError] = useState<string | null>(null);
+  const [_error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     const generateItineraries = async () => {

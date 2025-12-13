@@ -1,8 +1,8 @@
-export * from './user';
-export * from './location';
-export * from './itinerary';
-export * from './trip';
-export * from './onboarding';
-export * from './api';
-export * from './integrations';
+export * from './user.js';
+export * from './location.js';
+export * from './itinerary.js';
+export * from './trip.js';
+export * from './onboarding.js';
+export * from './api.js';
+export * from './integrations.js';
 

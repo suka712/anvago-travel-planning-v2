@@ -146,7 +146,7 @@ function SwipeCard({ card, onSwipe, isTop }: SwipeCardProps) {
 }
 
 export default function VibeStep() {
-  const { answers, addToArray } = useOnboardingStore();
+  const { answers: _answers, addToArray } = useOnboardingStore();
   const [currentIndex, setCurrentIndex] = useState(0);
   const [swipedCards, setSwipedCards] = useState<{ id: string; liked: boolean }[]>([]);
 

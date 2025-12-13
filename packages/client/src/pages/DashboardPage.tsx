@@ -1,5 +1,5 @@
 import { Card, Button, Badge } from '@/components/ui';
-import { Plus, MapPin, Clock, ArrowRight, Calendar, Play } from 'lucide-react';
+import { Plus, MapPin, ArrowRight, Calendar, Play } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useAuthStore } from '@/stores/authStore';
 

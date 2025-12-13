@@ -2,8 +2,8 @@ import { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import {
-  MapPin, Clock, DollarSign, Star, Calendar, ChevronRight,
-  Share2, Download, Heart, Map, Sun, Cloud, Navigation,
+  MapPin, DollarSign, Star, Calendar, ChevronRight,
+  Share2, Download, Heart, Map, Cloud, Navigation,
   Bike, Car, Footprints, ArrowLeft
 } from 'lucide-react';
 import { Button, Card, Badge } from '@/components/ui';
@@ -243,12 +243,12 @@ export default function Itinerary() {
   // Get locations for map
   const mapLocations = mockItinerary.days
     .flatMap(day => day.activities)
-    .filter(a => a.location)
+    .filter((a): a is typeof a & { location: { lat: number; lng: number } } => 'location' in a && a.location != null)
     .map(a => ({
       id: a.id,
       name: a.name,
-      lat: a.location?.lat || 16.0544,
-      lng: a.location?.lng || 108.2022,
+      lat: a.location.lat,
+      lng: a.location.lng,
       type: a.type,
     }));
 
@@ -416,7 +416,7 @@ export default function Itinerary() {
                           <div>
                             <div className="flex items-center gap-2">
                               <h3 className="font-bold">{activity.name}</h3>
-                              {activity.isLocalGem && (
+                              {'isLocalGem' in activity && activity.isLocalGem && (
                                 <Badge variant="warning" className="text-xs">
                                   <Star className="w-3 h-3 mr-0.5" />
                                   Local Gem

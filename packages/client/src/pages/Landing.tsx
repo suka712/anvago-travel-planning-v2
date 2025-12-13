@@ -1,9 +1,9 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { 
-  MapPin, Sparkles, Compass, Zap, Clock, Shield, 
-  ChevronRight, Play, Star, Users, Globe,
+import {
+  MapPin, Sparkles, Compass, Zap, Clock, Shield,
+  ChevronRight, Play, Star, Globe,
   Bike, Coffee, Camera, Sunset
 } from 'lucide-react';
 import { Button, Card, Badge } from '@/components/ui';

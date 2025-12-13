@@ -1,5 +1,5 @@
 import { Outlet, Link, useLocation } from 'react-router-dom';
-import { Menu, X, User, LogOut, Map, Calendar, Settings } from 'lucide-react';
+import { Menu, X, LogOut, Map, Calendar, Settings } from 'lucide-react';
 import { useState } from 'react';
 import { useAuthStore } from '@/stores/authStore';
 import { Button } from '@/components/ui';

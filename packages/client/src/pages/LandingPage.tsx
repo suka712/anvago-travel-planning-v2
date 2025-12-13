@@ -1,10 +1,9 @@
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { 
-  MapPin, 
-  Sparkles, 
-  Clock, 
-  Navigation, 
+import {
+  Sparkles,
+  Clock,
+  Navigation,
   CloudSun,
   Car,
   ArrowRight,

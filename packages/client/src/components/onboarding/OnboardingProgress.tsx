@@ -16,13 +16,11 @@ export default function OnboardingProgress({
   ]
 }: OnboardingProgressProps) {
   const progress = ((currentStep + 1) / totalSteps) * 100;
-  
-  // Determine which section we're in
-  let currentSection = 0;
+
+  // Calculate steps accumulated for markers
   let stepsAccumulated = 0;
   for (let i = 0; i < sections.length; i++) {
     if (currentStep < stepsAccumulated + sections[i].steps) {
-      currentSection = i;
       break;
     }
     stepsAccumulated += sections[i].steps;
@@ -62,7 +60,7 @@ export default function OnboardingProgress({
         />
         
         {/* Section Markers */}
-        {sections.slice(0, -1).map((section, idx) => {
+        {sections.slice(0, -1).map((_section, idx) => {
           const markerPosition = (sections.slice(0, idx + 1).reduce((acc, s) => acc + s.steps, 0) / totalSteps) * 100;
           return (
             <div

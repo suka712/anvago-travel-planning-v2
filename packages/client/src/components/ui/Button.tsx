@@ -2,17 +2,21 @@ import { type ButtonHTMLAttributes, forwardRef } from 'react';
 import { Loader2 } from 'lucide-react';
 
 export interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
-  variant?: 'primary' | 'secondary' | 'danger' | 'ghost';
+  variant?: 'primary' | 'secondary' | 'danger' | 'ghost' | 'error' | 'success' | 'warning';
   size?: 'sm' | 'md' | 'lg';
   isLoading?: boolean;
   leftIcon?: React.ReactNode;
   rightIcon?: React.ReactNode;
+  fullWidth?: boolean;
 }
 
 const variantStyles = {
   primary: 'bg-[#4FC3F7] text-black hover:bg-[#2196F3] shadow-[4px_4px_0px_#000]',
   secondary: 'bg-white text-black hover:bg-gray-100 shadow-[4px_4px_0px_#000]',
   danger: 'bg-red-500 text-white hover:bg-red-600 shadow-[4px_4px_0px_#000]',
+  error: 'bg-red-500 text-white hover:bg-red-600 shadow-[4px_4px_0px_#000]',
+  success: 'bg-green-500 text-white hover:bg-green-600 shadow-[4px_4px_0px_#000]',
+  warning: 'bg-yellow-500 text-black hover:bg-yellow-600 shadow-[4px_4px_0px_#000]',
   ghost: 'bg-transparent text-black hover:bg-gray-100 border-transparent shadow-none',
 };
 
@@ -31,6 +35,7 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
       isLoading = false,
       leftIcon,
       rightIcon,
+      fullWidth = false,
       children,
       disabled,
       ...props
@@ -50,6 +55,7 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
           ${sizeStyles[size]}
           ${variant !== 'ghost' ? 'hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-[2px_2px_0px_#000] active:translate-x-[4px] active:translate-y-[4px] active:shadow-none' : ''}
           ${isDisabled ? 'opacity-50 cursor-not-allowed pointer-events-none' : ''}
+          ${fullWidth ? 'w-full' : ''}
           ${className}
         `}
         disabled={isDisabled}

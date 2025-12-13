@@ -2,8 +2,8 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import {
-  Plus, Map, Calendar, Clock, Star, ChevronRight, Settings,
-  User, Crown, LogOut, Heart, History, Sparkles, Bell
+  Plus, Map, Calendar, ChevronRight, Settings,
+  Crown, LogOut, Heart, History, Sparkles, Bell
 } from 'lucide-react';
 import { Button, Card, Badge } from '@/components/ui';
 import { useAuthStore } from '@/stores/authStore';

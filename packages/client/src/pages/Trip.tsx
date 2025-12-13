@@ -4,8 +4,8 @@ import { motion, AnimatePresence } from 'framer-motion';
 import toast from 'react-hot-toast';
 import {
   Navigation, MapPin, Clock, ChevronRight, CheckCircle2, Circle,
-  AlertTriangle, Cloud, CloudRain, Bike, Car, Footprints, Phone,
-  Bell, X, Play, Pause, SkipForward, Home, RefreshCw, Coffee
+  CloudRain, Bike, Car, Footprints,
+  X, Play, Pause, SkipForward, Home, RefreshCw, Coffee
 } from 'lucide-react';
 import { Button, Card, Badge } from '@/components/ui';
 
@@ -89,14 +89,14 @@ const weatherAlert = {
 };
 
 export default function Trip() {
-  const { id } = useParams();
+  const { id: _id } = useParams();
   const navigate = useNavigate();
   const [stops, setStops] = useState<TripStop[]>(mockTripStops);
   const [isPaused, setIsPaused] = useState(false);
   const [showTransportModal, setShowTransportModal] = useState(false);
   const [showWeatherAlert, setShowWeatherAlert] = useState(true);
   const [showRerouteOffer, setShowRerouteOffer] = useState(false);
-  const [currentTime, setCurrentTime] = useState('10:45');
+  const [currentTime, _setCurrentTime] = useState('10:45');
   const [notification, setNotification] = useState<string | null>(null);
 
   const currentStop = stops.find(s => s.status === 'current');

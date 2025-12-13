@@ -4,7 +4,7 @@ import { Link, useParams } from 'react-router-dom';
 
 // Placeholder - Full trip tracking view will be implemented in Day 7-8
 export default function TripPage() {
-  const { id } = useParams();
+  const { id: _id } = useParams();
 
   return (
     <div className="min-h-[80vh] flex items-center justify-center p-4">

@@ -4,10 +4,11 @@ export interface InputProps extends InputHTMLAttributes<HTMLInputElement> {
   label?: string;
   error?: string;
   hint?: string;
+  leftIcon?: React.ReactNode;
 }
 
 export const Input = forwardRef<HTMLInputElement, InputProps>(
-  ({ className = '', label, error, hint, id, ...props }, ref) => {
+  ({ className = '', label, error, hint, leftIcon, id, ...props }, ref) => {
     const inputId = id || label?.toLowerCase().replace(/\s+/g, '-');
 
     return (
@@ -20,23 +21,31 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
             {label}
           </label>
         )}
-        <input
-          ref={ref}
-          id={inputId}
-          className={`
-            w-full px-4 py-3 bg-white border-2 rounded-lg text-base
-            transition-shadow duration-200
-            placeholder:text-gray-400
-            ${error 
-              ? 'border-red-500 focus:shadow-[4px_4px_0px_#ef4444]' 
-              : 'border-black focus:shadow-[4px_4px_0px_#4FC3F7]'
-            }
-            focus:outline-none
-            disabled:bg-gray-100 disabled:cursor-not-allowed
-            ${className}
-          `}
-          {...props}
-        />
+        <div className="relative">
+          {leftIcon && (
+            <div className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">
+              {leftIcon}
+            </div>
+          )}
+          <input
+            ref={ref}
+            id={inputId}
+            className={`
+              w-full py-3 bg-white border-2 rounded-lg text-base
+              transition-shadow duration-200
+              placeholder:text-gray-400
+              ${leftIcon ? 'pl-10 pr-4' : 'px-4'}
+              ${error
+                ? 'border-red-500 focus:shadow-[4px_4px_0px_#ef4444]'
+                : 'border-black focus:shadow-[4px_4px_0px_#4FC3F7]'
+              }
+              focus:outline-none
+              disabled:bg-gray-100 disabled:cursor-not-allowed
+              ${className}
+            `}
+            {...props}
+          />
+        </div>
         {hint && !error && (
           <p className="mt-1 text-sm text-gray-500">{hint}</p>
         )}

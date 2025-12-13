@@ -1,12 +1,12 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import {
-  Users, Map, Calendar, TrendingUp, Settings, Database,
-  RefreshCw, Play, Pause, Eye, Edit, Trash2, Plus,
-  BarChart3, Globe, Sparkles, Cloud, CheckCircle2, CloudRain,
+  Users, Map, Calendar, Settings, Database,
+  RefreshCw, Play, Eye, Edit, Plus,
+  BarChart3, Globe, Sparkles, CheckCircle2, CloudRain,
   Loader2, AlertTriangle, Car
 } from 'lucide-react';
-import { Button, Card, Badge, Input } from '@/components/ui';
+import { Button, Card, Badge } from '@/components/ui';
 import { adminAPI } from '@/services/api';
 
 interface AdminStats {
@@ -297,7 +297,7 @@ export default function Admin() {
                       { name: 'API Server', status: 'online' },
                       { name: 'Database', status: 'online' },
                       { name: 'Weather API', status: 'mock' },
-                      { name: 'AI Service (Gemini)', status: process.env.VITE_GEMINI_API_KEY ? 'online' : 'mock' },
+                      { name: 'AI Service (Gemini)', status: import.meta.env.VITE_GEMINI_API_KEY ? 'online' : 'mock' },
                       { name: 'Grab Integration', status: 'mock' },
                     ].map(service => (
                       <div key={service.name} className="flex items-center justify-between py-2 border-b last:border-0">

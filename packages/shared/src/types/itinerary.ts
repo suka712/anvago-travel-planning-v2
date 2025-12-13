@@ -1,6 +1,6 @@
 // Itinerary Types
 
-import type { Location } from './location';
+import type { Location } from './location.js';
 
 export interface Itinerary {
   id: string;

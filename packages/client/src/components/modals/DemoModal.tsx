@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Play, Pause, Volume2, VolumeX, Maximize2 } from 'lucide-react';
+import { X, Play, Pause } from 'lucide-react';
 import { Button, Card } from '@/components/ui';
 
 interface DemoModalProps {

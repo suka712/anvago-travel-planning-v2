@@ -10,7 +10,8 @@
     "declaration": true,
     "declarationMap": true,
     "composite": true,
-    "outDir": "./dist"
+    "outDir": "./dist",
+    "rootDir": "./src"
   },
   "include": ["src/**/*"]
 }
