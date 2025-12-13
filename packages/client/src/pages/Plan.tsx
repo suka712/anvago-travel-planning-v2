@@ -244,7 +244,7 @@ export default function Plan() {
                 Add Location
               </Button>
               <Button onClick={() => navigate(`/itinerary/${id}`)}>
-                Save & Preview
+                Complete
               </Button>
             </div>
           </div>
