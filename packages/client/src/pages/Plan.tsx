@@ -582,7 +582,7 @@ export default function Plan() {
                   <div className="mt-4 p-3 rounded-lg bg-gradient-to-br from-[#4FC3F7]/10 to-[#81D4FA]/10 border border-[#4FC3F7]/30">
                     <div className="flex items-center gap-2 mb-2">
                       <Crown className="w-4 h-4 text-[#4FC3F7]" />
-                      <h3 className="font-semibold text-sm">Try optimizations</h3>
+                      <h3 className="font-semibold text-sm">Optimize for perfection</h3>
                     </div>
                     <p className="text-xs text-gray-600 mb-3">
                       Smart optimization, local tips & advanced filters.
