@@ -227,7 +227,7 @@ export default function Plan() {
             </div>
             <div className="flex items-center gap-3">
               {!isPremium && (
-                <Badge variant="warning" className="flex items-center gap-1">
+                <Badge variant="primary" className="flex items-center gap-1 bg-sky-300">
                   <Crown className="w-3 h-3" />
                   Free Plan
                 </Badge>
@@ -539,7 +539,7 @@ export default function Plan() {
                     className="w-full p-3 rounded-lg border-2 border-gray-200 hover:border-[#4FC3F7] hover:bg-[#4FC3F7]/5 transition-all text-left"
                   >
                     <div className="flex items-center gap-3">
-                      <div className="w-9 h-9 rounded-lg bg-linear-to-br from-sky-500 to-purple-200 flex items-center justify-center flex-shrink-0">
+                      <div className="w-9 h-9 rounded-lg bg-linear-to-br from-sky-500 to-purple-100 flex items-center justify-center flex-shrink-0">
                         <Star className="w-4 h-4 text-white" />
                       </div>
                       <div className="flex-1 min-w-0">
@@ -582,7 +582,7 @@ export default function Plan() {
                   <div className="mt-4 p-3 rounded-lg bg-gradient-to-br from-[#4FC3F7]/10 to-[#81D4FA]/10 border border-[#4FC3F7]/30">
                     <div className="flex items-center gap-2 mb-2">
                       <Crown className="w-4 h-4 text-[#4FC3F7]" />
-                      <h3 className="font-semibold text-sm">Unlock AI Features</h3>
+                      <h3 className="font-semibold text-sm">Try optimizations</h3>
                     </div>
                     <p className="text-xs text-gray-600 mb-3">
                       Smart optimization, local tips & advanced filters.
