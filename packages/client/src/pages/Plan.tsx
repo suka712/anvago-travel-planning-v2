@@ -243,12 +243,6 @@ export default function Plan() {
               >
                 Add Location
               </Button>
-              <Button
-                variant="ghost"
-                onClick={() => setShowSidePanel(!showSidePanel)}
-                title={showSidePanel ? 'Hide AI Tools' : 'Show AI Tools'}
-              >
-              </Button>
               <Button onClick={() => navigate(`/itinerary/${id}`)}>
                 Save & Preview
               </Button>
