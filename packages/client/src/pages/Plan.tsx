@@ -515,7 +515,7 @@ export default function Plan() {
                     className="w-full p-3 rounded-lg border-2 border-gray-200 hover:border-sky-primary hover:bg-sky-primary/5 transition-all text-left"
                   >
                     <div className="flex items-center gap-3">
-                      <div className="w-9 h-9 rounded-lg bg-linear-to-br from-sky-500 to-sky-200 flex items-center justify-center flex-shrink-0">
+                      <div className="w-9 h-9 rounded-lg bg-linear-to-br from-sky-500 to-sky-200 flex items-center justify-center shrink-0">
                         <Wand2 className="w-4 h-4 text-white" />
                       </div>
                       <div className="flex-1 min-w-0">
@@ -536,10 +536,10 @@ export default function Plan() {
                         setShowPremiumModal(true);
                       }
                     }}
-                    className="w-full p-3 rounded-lg border-2 border-gray-200 hover:border-[#4FC3F7] hover:bg-[#4FC3F7]/5 transition-all text-left"
+                    className="w-full p-3 rounded-lg border-2 border-gray-200 hover:border-sky-primary hover:bg-sky-primary/5 transition-all text-left"
                   >
                     <div className="flex items-center gap-3">
-                      <div className="w-9 h-9 rounded-lg bg-linear-to-br from-sky-500 to-purple-100 flex items-center justify-center flex-shrink-0">
+                      <div className="w-9 h-9 rounded-lg bg-linear-to-br from-sky-500 to-purple-100 flex items-center justify-center shrink-0">
                         <Star className="w-4 h-4 text-white" />
                       </div>
                       <div className="flex-1 min-w-0">
@@ -560,10 +560,10 @@ export default function Plan() {
                         setShowPremiumModal(true);
                       }
                     }}
-                    className="w-full p-3 rounded-lg border-2 border-gray-200 hover:border-[#4FC3F7] hover:bg-[#4FC3F7]/5 transition-all text-left"
+                    className="w-full p-3 rounded-lg border-2 border-gray-200 hover:border-sky-primary hover:bg-sky-primary/5 transition-all text-left"
                   >
                     <div className="flex items-center gap-3">
-                      <div className="w-9 h-9 rounded-lg bg-linear-to-br from-sky-500 to-teal-100 flex items-center justify-center flex-shrink-0">
+                      <div className="w-9 h-9 rounded-lg bg-linear-to-br from-sky-500 to-teal-100 flex items-center justify-center shrink-0">
                         <Search className="w-4 h-4 text-white" />
                       </div>
                       <div className="flex-1 min-w-0">
@@ -579,9 +579,9 @@ export default function Plan() {
 
                 {/* Upgrade CTA */}
                 {!isPremium && (
-                  <div className="mt-4 p-3 rounded-lg bg-gradient-to-br from-[#4FC3F7]/10 to-[#81D4FA]/10 border border-[#4FC3F7]/30">
+                  <div className="mt-4 p-3 rounded-lg bg-linear-to-br from-sky-primary/10 to-sky-light/10 border border-sky-primary/30">
                     <div className="flex items-center gap-2 mb-2">
-                      <Crown className="w-4 h-4 text-[#4FC3F7]" />
+                      <Crown className="w-4 h-4 text-sky-primary" />
                       <h3 className="font-semibold text-sm">Optimize for perfection</h3>
                     </div>
                     <p className="text-xs text-gray-600 mb-3">
@@ -605,15 +605,15 @@ export default function Plan() {
                   <h3 className="font-semibold text-xs text-gray-500 uppercase tracking-wide mb-2">Quick Tips</h3>
                   <ul className="space-y-1.5 text-xs text-gray-600">
                     <li className="flex items-center gap-2">
-                      <GripVertical className="w-3 h-3 text-gray-400 flex-shrink-0" />
+                      <GripVertical className="w-3 h-3 text-gray-400 shrink-0" />
                       <span>Drag to reorder</span>
                     </li>
                     <li className="flex items-center gap-2">
-                      <RefreshCw className="w-3 h-3 text-gray-400 flex-shrink-0" />
+                      <RefreshCw className="w-3 h-3 text-gray-400 shrink-0" />
                       <span>Click to replace location</span>
                     </li>
                     <li className="flex items-center gap-2">
-                      <Clock className="w-3 h-3 text-gray-400 flex-shrink-0" />
+                      <Clock className="w-3 h-3 text-gray-400 shrink-0" />
                       <span>+/- to adjust duration</span>
                     </li>
                   </ul>
@@ -676,7 +676,7 @@ export default function Plan() {
                 </div>
 
                 {/* Premium Smart Filter Hint */}
-                <div className="mb-4 p-3 bg-gradient-to-r from-gray-50 to-gray-100 border border-gray-200 rounded-lg">
+                <div className="mb-4 p-3 bg-linear-to-r from-gray-50 to-gray-100 border border-gray-200 rounded-lg">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2 text-gray-600">
                       <Filter className="w-4 h-4" />
@@ -723,10 +723,10 @@ export default function Plan() {
                   {mockSearchResults.map((result) => (
                     <div
                       key={result.id}
-                      className="flex items-center gap-4 p-3 rounded-lg hover:bg-gray-50 cursor-pointer transition-colors border border-transparent hover:border-[#4FC3F7]"
+                      className="flex items-center gap-4 p-3 rounded-lg hover:bg-gray-50 cursor-pointer transition-colors border border-transparent hover:border-sky-primary"
                       onClick={() => replaceTarget ? handleReplaceItem(result) : handleAddItem(0, result)}
                     >
-                      <div className="w-16 h-16 rounded-lg overflow-hidden flex-shrink-0 border border-gray-200">
+                      <div className="w-16 h-16 rounded-lg overflow-hidden shrink-0 border border-gray-200">
                         <img src={result.image} alt={result.name} className="w-full h-full object-cover" />
                       </div>
                       <div className="flex-1">
@@ -747,7 +747,7 @@ export default function Plan() {
                           <span>{formatCost(result.cost)}</span>
                         </div>
                       </div>
-                      <div className="flex items-center justify-center w-8 h-8 rounded-full bg-[#4FC3F7]/10 text-[#4FC3F7]">
+                      <div className="flex items-center justify-center w-8 h-8 rounded-full bg-sky-primary/10 text-sky-primary">
                         {replaceTarget ? <ArrowRight className="w-5 h-5" /> : <Plus className="w-5 h-5" />}
                       </div>
                     </div>
@@ -787,7 +787,7 @@ export default function Plan() {
             >
               <Card>
                 <div className="text-center mb-6">
-                  <Wand2 className="w-12 h-12 text-[#4FC3F7] mx-auto mb-3" />
+                  <Wand2 className="w-12 h-12 text-sky-primary mx-auto mb-3" />
                   <h2 className="text-xl font-bold">Go AI Optimization</h2>
                   <p className="text-gray-600">Let AI optimize your itinerary</p>
                 </div>
@@ -801,9 +801,9 @@ export default function Plan() {
                   ].map(option => (
                     <button
                       key={option.id}
-                      className="p-4 rounded-xl border-2 hover:border-[#4FC3F7] transition-colors text-left"
+                      className="p-4 rounded-xl border-2 hover:border-sky-primary transition-colors text-left"
                     >
-                      <option.icon className="w-6 h-6 text-[#4FC3F7] mb-2" />
+                      <option.icon className="w-6 h-6 text-sky-primary mb-2" />
                       <span className="font-medium text-sm">{option.label}</span>
                     </button>
                   ))}
