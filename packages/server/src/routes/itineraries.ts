@@ -5,7 +5,7 @@ import { requireAuth, optionalAuth, requirePremium } from '../middleware/auth.js
 import { AppError } from '../middleware/errorHandler.js';
 import { generateItinerary, optimizeItinerary, localizeItinerary } from '../services/ai.js';
 
-const router = Router();
+const router: Router = Router();
 
 // Schemas
 const createItinerarySchema = z.object({

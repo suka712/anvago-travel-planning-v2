@@ -1,4 +1,4 @@
-import type { TrafficResponse } from '@anvago/shared';
+import type { TrafficResponse, TrafficHotspot, TrafficStatus } from '@anvago/shared';
 import { prisma } from '../config/database.js';
 
 // Traffic data is mocked since we don't have a real traffic API
@@ -12,9 +12,9 @@ export async function getTraffic(city: string): Promise<TrafficResponse> {
     });
 
     if (demoState?.trafficOverride) {
-      return demoState.trafficOverride as TrafficResponse;
+      return demoState.trafficOverride as unknown as TrafficResponse;
     }
-  } catch (e) {
+  } catch {
     // Demo state table might not exist yet
   }
 
@@ -24,41 +24,41 @@ export async function getTraffic(city: string): Promise<TrafficResponse> {
 
 function getMockTraffic(city: string): TrafficResponse {
   const hour = new Date().getHours();
-  
+
   // Simulate rush hour traffic
   const isRushHour = (hour >= 7 && hour <= 9) || (hour >= 17 && hour <= 19);
   const isMidDay = hour >= 11 && hour <= 14;
-  
-  let overallStatus: 'low' | 'moderate' | 'heavy' = 'low';
+
+  let overallStatus: TrafficStatus = 'low';
   if (isRushHour) overallStatus = 'heavy';
   else if (isMidDay) overallStatus = 'moderate';
 
-  const hotspots = [
+  const hotspots: TrafficHotspot[] = [
     {
       area: 'Dragon Bridge',
-      status: isRushHour ? 'heavy' : 'moderate' as const,
+      status: isRushHour ? 'heavy' : 'moderate',
       reason: isRushHour ? 'Rush hour traffic' : undefined,
     },
     {
       area: 'Han Market Area',
-      status: isMidDay ? 'heavy' : 'moderate' as const,
+      status: isMidDay ? 'heavy' : 'moderate',
       reason: isMidDay ? 'Market activity' : undefined,
     },
     {
       area: 'My Khe Beach Road',
-      status: 'low' as const,
+      status: 'low',
     },
     {
       area: 'Son Tra Peninsula',
-      status: 'low' as const,
+      status: 'low',
     },
     {
       area: 'Airport Road',
-      status: isRushHour ? 'moderate' : 'low' as const,
+      status: isRushHour ? 'moderate' : 'low',
     },
   ];
 
-  const recommendations = {
+  const recommendations: Record<TrafficStatus, string> = {
     heavy: 'Heavy traffic expected. Consider starting activities earlier or using Grab Bike.',
     moderate: 'Moderate traffic in central areas. Allow extra travel time during peak hours.',
     low: 'Light traffic conditions. Great time to explore!',
@@ -75,16 +75,16 @@ function getMockTraffic(city: string): TrafficResponse {
 
 // Admin function to set traffic override
 export async function setTrafficOverride(
-  city: string,
+  _city: string,
   override: Partial<TrafficResponse>
 ): Promise<void> {
   await prisma.demoState.upsert({
     where: { id: 'singleton' },
     create: {
-      trafficOverride: override,
+      trafficOverride: override as any,
     },
     update: {
-      trafficOverride: override,
+      trafficOverride: override as any,
     },
   });
 }
@@ -94,7 +94,7 @@ export async function clearTrafficOverride(): Promise<void> {
   await prisma.demoState.update({
     where: { id: 'singleton' },
     data: {
-      trafficOverride: null,
+      trafficOverride: undefined,
     },
   });
 }

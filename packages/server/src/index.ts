@@ -1,5 +1,5 @@
 import 'dotenv/config';
-import express from 'express';
+import express, { Express } from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
 import cookieParser from 'cookie-parser';
@@ -8,7 +8,7 @@ import { requestLogger } from './middleware/requestLogger.js';
 import { setupPassport } from './config/passport.js';
 import routes from './routes/index.js';
 
-const app = express();
+const app: Express = express();
 const PORT = process.env.PORT || 3001;
 const CLIENT_URL = process.env.CLIENT_URL || 'http://localhost:5173';
 

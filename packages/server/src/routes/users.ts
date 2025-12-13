@@ -4,7 +4,7 @@ import { prisma } from '../config/database.js';
 import { requireAuth } from '../middleware/auth.js';
 import { AppError } from '../middleware/errorHandler.js';
 
-const router = Router();
+const router: Router = Router();
 
 // Validation schemas
 const updateProfileSchema = z.object({

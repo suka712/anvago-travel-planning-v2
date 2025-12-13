@@ -100,10 +100,10 @@ export async function createGrabBooking(
         pickup: request.pickup,
         dropoff: request.dropoff,
         driver,
-        estimate,
-      },
+        estimate: estimate as unknown as Record<string, unknown>,
+      } as any,
       price: estimate.estimatedFare,
-      scheduledTime: request.scheduledTime ? new Date(request.scheduledTime) : null,
+      scheduledTime: request.scheduledTime ? new Date(request.scheduledTime as unknown as string) : null,
     },
   });
 

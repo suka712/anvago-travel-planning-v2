@@ -4,7 +4,7 @@ import { prisma } from '../config/database.js';
 import { requireAuth } from '../middleware/auth.js';
 import { AppError } from '../middleware/errorHandler.js';
 
-const router = Router();
+const router: Router = Router();
 
 // Schemas
 const createTripSchema = z.object({
@@ -21,7 +21,7 @@ const updateTripSchema = z.object({
 const createEventSchema = z.object({
   type: z.string(),
   message: z.string(),
-  data: z.record(z.unknown()).optional(),
+  data: z.record(z.any()).optional(),
 });
 
 // GET /trips
@@ -344,7 +344,9 @@ router.post('/:id/events', requireAuth, async (req, res, next) => {
     const event = await prisma.tripEvent.create({
       data: {
         tripId: req.params.id,
-        ...data,
+        type: data.type,
+        message: data.message,
+        data: data.data as any,
       },
     });
 

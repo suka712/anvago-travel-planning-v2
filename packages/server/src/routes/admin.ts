@@ -3,7 +3,7 @@ import { prisma } from '../config/database.js';
 import { requireAdmin } from '../middleware/auth.js';
 import type { AdminStats } from '@anvago/shared';
 
-const router = Router();
+const router: Router = Router();
 
 // GET /admin/stats
 router.get('/stats', requireAdmin, async (req, res, next) => {

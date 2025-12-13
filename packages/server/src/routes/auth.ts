@@ -7,7 +7,7 @@ import { generateTokens, verifyRefreshToken, requireAuth } from '../middleware/a
 import { AppError } from '../middleware/errorHandler.js';
 import type { ApiResponse, LoginResponse } from '@anvago/shared';
 
-const router = Router();
+const router: Router = Router();
 
 // Validation schemas
 const registerSchema = z.object({

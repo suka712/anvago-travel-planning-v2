@@ -8,7 +8,7 @@ import { AppError } from '../middleware/errorHandler.js';
 const DEFAULT_PAGE_SIZE = 20;
 const MAX_PAGE_SIZE = 100;
 
-const router = Router();
+const router: Router = Router();
 
 // Query schema
 const listQuerySchema = z.object({

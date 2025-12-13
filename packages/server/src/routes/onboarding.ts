@@ -1,8 +1,8 @@
 import { Router } from 'express';
-import { 
-  TRAVELER_PERSONAS, 
-  DURATION_OPTIONS, 
-  ACTIVITY_LEVELS, 
+import {
+  TRAVELER_PERSONAS,
+  DURATION_OPTIONS,
+  ACTIVITY_LEVELS,
   BUDGET_LEVELS,
   INTEREST_CATEGORIES,
   SUPPORTED_CITIES,
@@ -12,7 +12,7 @@ import { getTraffic } from '../services/traffic.js';
 import { generateItinerary } from '../services/ai.js';
 import { getVibeCards } from '../services/vibeCards.js';
 
-const router = Router();
+const router: Router = Router();
 
 // GET /onboarding/questions
 router.get('/questions', async (req, res, next) => {

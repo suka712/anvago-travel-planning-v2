@@ -1,14 +1,14 @@
 import { Router } from 'express';
 import { z } from 'zod';
 import { requireAuth, optionalAuth } from '../middleware/auth.js';
-import { 
-  getGrabEstimate, 
+import {
+  getGrabEstimate,
   createGrabBooking,
   searchAccommodations,
   searchActivities,
 } from '../services/mockIntegrations.js';
 
-const router = Router();
+const router: Router = Router();
 
 // Schemas
 const grabEstimateSchema = z.object({
@@ -85,8 +85,11 @@ router.get('/grab/estimate', optionalAuth, async (req, res, next) => {
 router.post('/grab/book', requireAuth, async (req, res, next) => {
   try {
     const data = grabBookingSchema.parse(req.body);
-    
-    const booking = await createGrabBooking(req.user!.id, data);
+
+    const booking = await createGrabBooking(req.user!.id, {
+      ...data,
+      scheduledTime: data.scheduledTime ? new Date(data.scheduledTime) : undefined,
+    });
 
     res.status(201).json({
       success: true,

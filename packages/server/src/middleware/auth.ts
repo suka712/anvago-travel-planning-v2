@@ -96,13 +96,13 @@ export function generateTokens(user: User) {
   };
 
   const accessToken = jwt.sign(payload, JWT_SECRET, {
-    expiresIn: process.env.JWT_EXPIRES_IN || '7d',
+    expiresIn: (process.env.JWT_EXPIRES_IN || '7d') as jwt.SignOptions['expiresIn'],
   });
 
   const refreshToken = jwt.sign(
     { sub: user.id, type: 'refresh' },
     JWT_SECRET,
-    { expiresIn: process.env.JWT_REFRESH_EXPIRES_IN || '30d' }
+    { expiresIn: (process.env.JWT_REFRESH_EXPIRES_IN || '30d') as jwt.SignOptions['expiresIn'] }
   );
 
   return {

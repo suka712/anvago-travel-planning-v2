@@ -2,7 +2,7 @@ import { Router } from 'express';
 import { getWeather } from '../services/weather.js';
 import { getTraffic } from '../services/traffic.js';
 
-const router = Router();
+const router: Router = Router();
 
 // GET /external/weather/:city
 router.get('/weather/:city', async (req, res, next) => {

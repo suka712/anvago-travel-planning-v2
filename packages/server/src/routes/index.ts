@@ -9,7 +9,7 @@ import integrationRoutes from './integrations.js';
 import adminRoutes from './admin.js';
 import externalRoutes from './external.js';
 
-const router = Router();
+const router: Router = Router();
 
 // Mount routes
 router.use('/auth', authRoutes);
