@@ -1,0 +1,17 @@
+# Railway configuration
+# Note: For monorepo deployments, you typically create separate services in Railway
+# and configure each one in the UI with the appropriate Dockerfile path.
+#
+# This config is for the CLIENT service. For the server, create a separate
+# Railway service and set its Dockerfile path to: packages/server/Dockerfile
+
+[build]
+builder = "dockerfile"
+dockerfilePath = "packages/client/Dockerfile"
+watchPatterns = ["packages/client/**", "packages/shared/**"]
+
+[deploy]
+healthcheckPath = "/"
+healthcheckTimeout = 100
+restartPolicyType = "on_failure"
+restartPolicyMaxRetries = 3

@@ -15,6 +15,14 @@ The app consists of 3 services:
 2. Railway CLI installed: `npm install -g @railway/cli`
 3. Git repository connected to Railway
 
+## Important: Monorepo Configuration
+
+**Railway uses Nixpacks by default** which auto-detects your project type. For this monorepo, you **MUST** configure each service to use Docker instead:
+
+1. Go to service **Settings** → **Build**
+2. Change **Builder** from "Nixpacks" to **"Dockerfile"**
+3. Set the correct **Dockerfile Path**
+
 ## Deployment Steps
 
 ### 1. Create a New Project on Railway
@@ -37,14 +45,15 @@ In Railway dashboard:
 Create a new service in Railway:
 
 1. Click "New" → "GitHub Repo" → Select your repo
-2. Configure the service:
-   - **Root Directory**: `/` (root of monorepo)
-   - **Dockerfile Path**: `packages/server/Dockerfile`
-   - **Watch Paths**: `packages/server/**`, `packages/shared/**`
+2. **IMPORTANT: Configure the build settings:**
+   - Go to **Settings** → **Build**
+   - Set **Builder** to **Dockerfile**
+   - Set **Dockerfile Path** to: `packages/server/Dockerfile`
+   - Set **Watch Paths** to: `packages/server/**,packages/shared/**`
 
-3. Add environment variables:
+3. Add environment variables in **Variables** tab:
    ```
-   DATABASE_URL        → Reference the PostgreSQL service variable
+   DATABASE_URL        → Reference the PostgreSQL service variable (click "Add Reference")
    JWT_SECRET          → Your secret key (generate a strong random string)
    CLIENT_URL          → Your frontend URL (set after deploying client)
    NODE_ENV            → production
@@ -53,22 +62,25 @@ Create a new service in Railway:
    GEMINI_API_KEY      → (optional) For AI features
    ```
 
-4. Railway will auto-deploy when you push to main branch
+4. Click **Deploy** or push to trigger auto-deploy
 
 ### 4. Deploy the Frontend (Client)
 
 Create another service in Railway:
 
 1. Click "New" → "GitHub Repo" → Select your repo
-2. Configure the service:
-   - **Root Directory**: `/` (root of monorepo)
-   - **Dockerfile Path**: `packages/client/Dockerfile`
-   - **Watch Paths**: `packages/client/**`, `packages/shared/**`
+2. **IMPORTANT: Configure the build settings:**
+   - Go to **Settings** → **Build**
+   - Set **Builder** to **Dockerfile**
+   - Set **Dockerfile Path** to: `packages/client/Dockerfile`
+   - Set **Watch Paths** to: `packages/client/**,packages/shared/**`
 
-3. Add build arguments (in Variables section):
+3. Add environment variables in **Variables** tab:
    ```
    VITE_API_URL → Your backend URL + /api/v1 (e.g., https://anvago-server.up.railway.app/api/v1)
    ```
+
+   **Note:** `VITE_API_URL` is a build-time variable. After adding/changing it, you must redeploy.
 
 4. After deployment, copy the client URL and update `CLIENT_URL` in the server service
 
