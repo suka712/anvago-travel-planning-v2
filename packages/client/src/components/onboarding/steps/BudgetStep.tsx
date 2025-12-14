@@ -55,9 +55,9 @@ export default function BudgetStep() {
         animate={{ opacity: 1, y: 0 }}
         className="mb-8"
       >
-        <div className="inline-flex items-center gap-2 px-4 py-2 bg-[#4FC3F7]/20 rounded-full mb-4">
-          <Wallet className="w-4 h-4 text-[#2196F3]" />
-          <span className="text-sm font-medium text-[#2196F3]">Step 8 of 8 - Final Step!</span>
+        <div className="inline-flex items-center gap-2 px-4 py-2 bg-sky-primary/20 rounded-full mb-4">
+          <Wallet className="w-4 h-4 text-sky-dark" />
+          <span className="text-sm font-medium text-sky-dark">Step 8 of 8 - Final Step!</span>
         </div>
         <h1 className="text-3xl md:text-4xl font-bold mb-3">
           What's your spending style?
@@ -81,13 +81,13 @@ export default function BudgetStep() {
               <Card
                 hoverable
                 className={`cursor-pointer text-center relative overflow-hidden h-full ${
-                  isSelected ? 'bg-[#4FC3F7]/5' : ''
+                  isSelected ? 'bg-sky-primary/5' : ''
                 }`}
                 onClick={() => setAnswer('budgetLevel', level.id as 'budget' | 'moderate' | 'luxury')}
               >
                 {/* Gradient Background */}
                 <div 
-                  className={`absolute inset-0 bg-gradient-to-br ${level.color} opacity-0 transition-opacity ${
+                  className={`absolute inset-0 bg-linear-to-br ${level.color} opacity-0 transition-opacity ${
                     isSelected ? 'opacity-30' : ''
                   }`}
                 />
@@ -102,7 +102,7 @@ export default function BudgetStep() {
                   <motion.div
                     initial={{ scale: 0 }}
                     animate={{ scale: 1 }}
-                    className="absolute top-3 left-3 w-6 h-6 bg-[#4FC3F7] rounded-full border-2 border-black flex items-center justify-center"
+                    className="absolute top-3 left-3 w-6 h-6 bg-sky-primary rounded-full border-2 border-black flex items-center justify-center"
                   >
                     <span className="text-sm">✓</span>
                   </motion.div>
@@ -120,7 +120,7 @@ export default function BudgetStep() {
                   
                   {/* Price Range */}
                   <div className={`p-3 rounded-lg mb-4 transition-colors ${
-                    isSelected ? 'bg-[#4FC3F7]/20' : 'bg-gray-100'
+                    isSelected ? 'bg-sky-primary/20' : 'bg-gray-100'
                   }`}>
                     <p className="font-bold text-lg">{level.dailyRange}</p>
                     <p className="text-sm text-gray-500">per day ({level.dailyUSD})</p>
@@ -132,7 +132,7 @@ export default function BudgetStep() {
                     <ul className="text-xs text-gray-600 space-y-1">
                       {level.examples.map((example, i) => (
                         <li key={i} className="flex items-center gap-1">
-                          <span className="text-[#4FC3F7]">•</span> {example}
+                          <span className="text-sky-primary">•</span> {example}
                         </li>
                       ))}
                     </ul>
@@ -150,12 +150,12 @@ export default function BudgetStep() {
         animate={{ opacity: 1 }}
         transition={{ delay: 0.4 }}
       >
-        <Card className="bg-gradient-to-r from-[#4FC3F7]/10 to-[#81D4FA]/10">
+        <Card className="bg-linear-to-r from-sky-primary/10 to-sky-light/10">
           <div className="flex items-center justify-center gap-2 mb-3">
-            <Info className="w-4 h-4 text-[#2196F3]" />
+            <Info className="w-4 h-4 text-sky-dark" />
             <h4 className="font-medium text-gray-700">Estimated Trip Budget</h4>
           </div>
-          <p className="text-3xl font-bold text-[#2196F3] mb-1">
+          <p className="text-3xl font-bold text-sky-dark mb-1">
             {(totalEstimate / 1000000).toFixed(1)}M VND
           </p>
           <p className="text-sm text-gray-500">
