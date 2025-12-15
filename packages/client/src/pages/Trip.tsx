@@ -1,87 +1,16 @@
 import { useState, useEffect } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import toast from 'react-hot-toast';
 import {
   Navigation, MapPin, Clock, ChevronRight, CheckCircle2, Circle,
   CloudRain, Bike, Car, Footprints, Map, Maximize2, Minimize2,
-  X, Play, Pause, SkipForward, RefreshCw, Coffee, ChevronDown
+  X, Play, Pause, SkipForward, RefreshCw, Coffee, ChevronDown,
+  Sunrise, PartyPopper
 } from 'lucide-react';
 import { Button, Card, Badge } from '@/components/ui';
 import Header from '@/components/layouts/Header';
-
-interface TripStop {
-  id: string;
-  name: string;
-  type: string;
-  time: string;
-  duration: string;
-  status: 'completed' | 'current' | 'upcoming' | 'skipped';
-  address: string;
-  image: string;
-  transport?: {
-    mode: 'grab_bike' | 'grab_car' | 'walk';
-    duration: string;
-    cost?: number;
-  };
-}
-
-const mockTripStops: TripStop[] = [
-  {
-    id: '1',
-    name: 'Sunrise at My Khe Beach',
-    type: 'beach',
-    time: '6:00',
-    duration: '2h',
-    status: 'completed',
-    address: 'My Khe Beach, Phuoc My, Son Tra, Da Nang',
-    image: 'https://images.unsplash.com/photo-1537996194471-e657df975ab4?w=300',
-  },
-  {
-    id: '2',
-    name: 'Bánh Mì Bà Lan',
-    type: 'food',
-    time: '8:30',
-    duration: '45m',
-    status: 'completed',
-    address: '115 Nguyen Chi Thanh, Hai Chau, Da Nang',
-    image: 'https://images.unsplash.com/photo-1555939594-58d7cb561ad1?w=300',
-    transport: { mode: 'grab_bike', duration: '10 min', cost: 25000 },
-  },
-  {
-    id: '3',
-    name: 'Han Market',
-    type: 'shopping',
-    time: '10:00',
-    duration: '2h',
-    status: 'current',
-    address: '119 Tran Phu, Hai Chau, Da Nang',
-    image: 'https://images.unsplash.com/photo-1555939594-58d7cb561ad1?w=300',
-    transport: { mode: 'walk', duration: '15 min' },
-  },
-  {
-    id: '4',
-    name: 'Madame Lan Restaurant',
-    type: 'food',
-    time: '12:30',
-    duration: '1.5h',
-    status: 'upcoming',
-    address: '4 Bach Dang, Hai Chau, Da Nang',
-    image: 'https://images.unsplash.com/photo-1555939594-58d7cb561ad1?w=300',
-    transport: { mode: 'grab_bike', duration: '8 min', cost: 20000 },
-  },
-  {
-    id: '5',
-    name: 'Beach Club Relaxation',
-    type: 'beach',
-    time: '15:00',
-    duration: '3h',
-    status: 'upcoming',
-    address: 'My Khe Beach, Son Tra, Da Nang',
-    image: 'https://images.unsplash.com/photo-1537996194471-e657df975ab4?w=300',
-    transport: { mode: 'grab_car', duration: '15 min', cost: 75000 },
-  },
-];
+import { useTripProgressStore, TripStop } from '@/stores/tripProgressStore';
 
 // Alternative stop for smart reroute
 const alternativeStop: TripStop = {
@@ -102,23 +31,44 @@ const weatherAlert = {
   icon: CloudRain,
 };
 
+// Get trip name from Dashboard mock data (in real app, this would come from API)
+const tripNames: Record<string, string> = {
+  '1': 'Beach & Culture Explorer',
+  '2': 'Foodie Paradise Trail',
+};
+
 export default function Trip() {
-  const { id: _id } = useParams();
-  const [stops, setStops] = useState<TripStop[]>(mockTripStops);
+  const { id } = useParams();
+  const navigate = useNavigate();
+  const tripId = id || 'default';
+  const tripName = tripNames[tripId] || 'My Trip';
+
+  // Get store actions and data
+  const { startTrip, getTrip, markStopComplete, skipStop, replaceStop, advanceToNextDay, resetTrip } = useTripProgressStore();
+  const tripProgress = getTrip(tripId);
+
   const [isPaused, setIsPaused] = useState(false);
   const [showTransportModal, setShowTransportModal] = useState(false);
   const [showWeatherAlert, setShowWeatherAlert] = useState(true);
   const [showRerouteOffer, setShowRerouteOffer] = useState(false);
   const [rerouteAccepted, setRerouteAccepted] = useState(false);
   const [currentTime, _setCurrentTime] = useState('10:45');
-  const [showMap, setShowMap] = useState(false);
   const [mapExpanded, setMapExpanded] = useState(false);
   const [showTimeline, setShowTimeline] = useState(true);
 
+  // Initialize trip if it doesn't exist
+  useEffect(() => {
+    if (!tripProgress) {
+      startTrip(tripId, tripName);
+    }
+  }, [tripId, tripName, tripProgress, startTrip]);
+
+  // Get stops from store, or empty array while initializing
+  const stops = tripProgress?.stops || [];
   const currentStop = stops.find(s => s.status === 'current');
   const nextStop = stops.find(s => s.status === 'upcoming');
   const completedCount = stops.filter(s => s.status === 'completed').length;
-  const progress = (completedCount / stops.length) * 100;
+  const progress = stops.length > 0 ? (completedCount / stops.length) * 100 : 0;
 
   // Simulate time passing
   useEffect(() => {
@@ -140,52 +90,33 @@ export default function Trip() {
 
   const handleMarkComplete = (stopId: string) => {
     const stop = stops.find(s => s.id === stopId);
-    setStops(prev => {
-      const newStops = [...prev];
-      const currentIdx = newStops.findIndex(s => s.id === stopId);
-      if (currentIdx !== -1) {
-        newStops[currentIdx].status = 'completed';
-        if (currentIdx + 1 < newStops.length) {
-          newStops[currentIdx + 1].status = 'current';
-          toast.success(`${stop?.name} completed!`);
-        } else {
-          toast.success('Trip completed! Great adventure!');
-        }
-      }
-      return newStops;
-    });
+    markStopComplete(tripId, stopId);
+    toast.success(`${stop?.name} completed!`);
   };
 
   const handleSkip = (stopId: string) => {
     const stop = stops.find(s => s.id === stopId);
-    setStops(prev => {
-      const newStops = [...prev];
-      const currentIdx = newStops.findIndex(s => s.id === stopId);
-      if (currentIdx !== -1) {
-        newStops[currentIdx].status = 'skipped';
-        if (currentIdx + 1 < newStops.length) {
-          newStops[currentIdx + 1].status = 'current';
-        }
-      }
-      return newStops;
-    });
+    skipStop(tripId, stopId);
     toast(`Skipped ${stop?.name}`, { icon: '⏭️' });
+  };
+
+  const handleAdvanceDay = () => {
+    advanceToNextDay(tripId);
+    toast.success(`Starting Day ${(tripProgress?.currentDay || 1) + 1}!`, { icon: '🌅' });
+  };
+
+  const handleRestartTrip = () => {
+    resetTrip(tripId);
+    toast.success('Trip restarted! Enjoy your adventure again!');
   };
 
   // Handle accepting the smart reroute swap
   const handleAcceptSwap = () => {
     // Find Beach Club and replace with 43 Factory Coffee
-    setStops(prev => {
-      const newStops = [...prev];
-      const beachClubIdx = newStops.findIndex(s => s.name === 'Beach Club Relaxation');
-      if (beachClubIdx !== -1) {
-        newStops[beachClubIdx] = {
-          ...alternativeStop,
-          status: newStops[beachClubIdx].status,
-        };
-      }
-      return newStops;
-    });
+    const beachClubStop = stops.find(s => s.name === 'Beach Club Relaxation');
+    if (beachClubStop) {
+      replaceStop(tripId, beachClubStop.id, alternativeStop);
+    }
     setShowRerouteOffer(false);
     setRerouteAccepted(true);
     setShowWeatherAlert(false);
@@ -212,13 +143,16 @@ export default function Trip() {
             <div className="flex items-center gap-3">
               <div>
                 <div className="flex items-center gap-2">
-                  <h1 className="font-bold text-lg">Day 1</h1>
+                  <h1 className="font-bold text-lg">
+                    Day {tripProgress?.currentDay || 1}
+                    <span className="text-gray-400 font-normal"> / {tripProgress?.totalDays || 3}</span>
+                  </h1>
                   <Badge variant="secondary" className="text-xs">
-                    Beach & Culture
+                    {tripProgress?.tripTheme || 'Explorer'}
                   </Badge>
                 </div>
                 <p className="text-sm text-gray-500">
-                  {currentTime} • {completedCount}/{stops.length} stops
+                  {currentTime} • {completedCount}/{stops.length} stops today
                 </p>
               </div>
             </div>
@@ -285,89 +219,130 @@ export default function Trip() {
           )}
         </AnimatePresence>
 
-        {/* Map View Toggle & Container */}
+        {/* Map View - Always visible */}
         <div className="mb-6">
-          <div className="flex items-center justify-between mb-3">
-            <button
-              onClick={() => setShowMap(!showMap)}
-              className="flex items-center gap-2 text-sm font-medium text-gray-600 hover:text-gray-900 transition-colors"
+          <Card className="overflow-hidden p-0">
+            <motion.div
+              animate={{ height: mapExpanded ? 350 : 160 }}
+              transition={{ duration: 0.3 }}
+              className="relative"
             >
-              <Map className="w-4 h-4" />
-              {showMap ? 'Hide Map' : 'Show Map'}
-            </button>
-            {showMap && (
-              <button
-                onClick={() => setMapExpanded(!mapExpanded)}
-                className="flex items-center gap-1 text-sm text-gray-500 hover:text-gray-700"
-              >
-                {mapExpanded ? (
-                  <>
-                    <Minimize2 className="w-4 h-4" />
-                    Collapse
-                  </>
-                ) : (
-                  <>
-                    <Maximize2 className="w-4 h-4" />
-                    Expand
-                  </>
-                )}
-              </button>
-            )}
-          </div>
+              <div className="w-full h-full bg-gray-200 flex items-center justify-center relative">
+                {/* Placeholder map - In production, integrate with Google Maps or Mapbox */}
+                <div className="absolute inset-0 bg-gradient-to-br from-sky-100 to-sky-200" />
+                <div className="absolute inset-0" style={{
+                  backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%234FC3F7' fill-opacity='0.15'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`,
+                }} />
 
-          <AnimatePresence>
-            {showMap && (
-              <motion.div
-                initial={{ opacity: 0, height: 0 }}
-                animate={{ opacity: 1, height: mapExpanded ? 400 : 200 }}
-                exit={{ opacity: 0, height: 0 }}
-                transition={{ duration: 0.3 }}
-              >
-                <Card className="overflow-hidden p-0">
-                  <div
-                    className="w-full bg-gray-200 flex items-center justify-center relative"
-                    style={{ height: mapExpanded ? 400 : 200 }}
-                  >
-                    {/* Placeholder map - In production, integrate with Google Maps or Mapbox */}
-                    <div className="absolute inset-0 bg-gradient-to-br from-sky-100 to-sky-200" />
-                    <div className="absolute inset-0" style={{
-                      backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%234FC3F7' fill-opacity='0.15'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`,
-                    }} />
-                    <div className="relative z-10 text-center">
-                      <Map className="w-12 h-12 text-sky-primary/50 mx-auto mb-2" />
-                      <p className="text-sm text-gray-600 font-medium">Interactive Map</p>
-                      <p className="text-xs text-gray-500">Shows your route & nearby locations</p>
+                {/* Map markers preview */}
+                <div className="absolute top-3 left-3 flex flex-col gap-1.5">
+                  {stops.slice(0, mapExpanded ? 5 : 3).map((stop, idx) => (
+                    <div
+                      key={stop.id}
+                      className={`flex items-center gap-2 px-2 py-1 rounded-lg text-xs font-medium ${
+                        stop.status === 'current'
+                          ? 'bg-sky-primary text-white'
+                          : stop.status === 'completed'
+                          ? 'bg-green-500 text-white'
+                          : stop.status === 'skipped'
+                          ? 'bg-gray-400 text-white'
+                          : 'bg-white text-gray-700 shadow-sm'
+                      }`}
+                    >
+                      <span className="w-4 h-4 rounded-full bg-white/20 flex items-center justify-center text-[10px]">
+                        {idx + 1}
+                      </span>
+                      <span className="truncate max-w-28">{stop.name}</span>
                     </div>
+                  ))}
+                </div>
 
-                    {/* Map markers preview */}
-                    <div className="absolute top-4 left-4 flex flex-col gap-2">
-                      {stops.slice(0, 3).map((stop, idx) => (
-                        <div
-                          key={stop.id}
-                          className={`flex items-center gap-2 px-2 py-1 rounded-lg text-xs font-medium ${
-                            stop.status === 'current'
-                              ? 'bg-sky-primary text-white'
-                              : stop.status === 'completed'
-                              ? 'bg-green-500 text-white'
-                              : 'bg-white text-gray-700 shadow-sm'
-                          }`}
-                        >
-                          <span className="w-4 h-4 rounded-full bg-white/20 flex items-center justify-center text-[10px]">
-                            {idx + 1}
-                          </span>
-                          <span className="truncate max-w-24">{stop.name}</span>
-                        </div>
-                      ))}
-                    </div>
+                {/* Expand/Collapse button */}
+                <button
+                  onClick={() => setMapExpanded(!mapExpanded)}
+                  className="absolute bottom-3 right-3 flex items-center gap-1.5 px-3 py-1.5 bg-white rounded-lg text-xs font-medium text-gray-700 shadow-md hover:shadow-lg transition-shadow"
+                >
+                  {mapExpanded ? (
+                    <>
+                      <Minimize2 className="w-3.5 h-3.5" />
+                      Collapse
+                    </>
+                  ) : (
+                    <>
+                      <Maximize2 className="w-3.5 h-3.5" />
+                      Expand
+                    </>
+                  )}
+                </button>
+
+                {/* Center placeholder when expanded */}
+                {mapExpanded && (
+                  <div className="relative z-10 text-center">
+                    <Map className="w-10 h-10 text-sky-primary/40 mx-auto mb-1" />
+                    <p className="text-xs text-gray-500">Interactive map coming soon</p>
                   </div>
-                </Card>
-              </motion.div>
-            )}
-          </AnimatePresence>
+                )}
+              </div>
+            </motion.div>
+          </Card>
         </div>
 
+        {/* Day Complete Card */}
+        {tripProgress?.dayCompleted && !tripProgress?.tripCompleted && (
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="mb-6"
+          >
+            <Card className="bg-gradient-to-br from-amber-50 to-orange-50 border-2 border-amber-300 text-center py-8">
+              <div className="w-16 h-16 bg-amber-100 rounded-full mx-auto mb-4 flex items-center justify-center">
+                <Sunrise className="w-8 h-8 text-amber-600" />
+              </div>
+              <h2 className="text-2xl font-bold mb-2">Day {tripProgress.currentDay} Complete!</h2>
+              <p className="text-gray-600 mb-6">
+                Great job today! Ready for Day {tripProgress.currentDay + 1}?
+              </p>
+              <div className="flex gap-3 justify-center max-w-xs mx-auto">
+                <Button onClick={handleAdvanceDay} className="flex-1">
+                  Start Day {tripProgress.currentDay + 1}
+                </Button>
+              </div>
+            </Card>
+          </motion.div>
+        )}
+
+        {/* Trip Complete Card */}
+        {tripProgress?.tripCompleted && (
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="mb-6"
+          >
+            <Card className="bg-gradient-to-br from-green-50 to-emerald-50 border-2 border-green-300 text-center py-8">
+              <div className="w-16 h-16 bg-green-100 rounded-full mx-auto mb-4 flex items-center justify-center">
+                <PartyPopper className="w-8 h-8 text-green-600" />
+              </div>
+              <h2 className="text-2xl font-bold mb-2">Trip Complete!</h2>
+              <p className="text-gray-600 mb-2">
+                Congratulations! You've completed your {tripProgress.totalDays}-day adventure.
+              </p>
+              <p className="text-sm text-gray-500 mb-6">
+                {tripProgress.tripName}
+              </p>
+              <div className="flex gap-3 justify-center max-w-md mx-auto">
+                <Button onClick={handleRestartTrip} variant="secondary" className="flex-1">
+                  Restart Trip
+                </Button>
+                <Button onClick={() => navigate('/dashboard')} className="flex-1">
+                  Back to Dashboard
+                </Button>
+              </div>
+            </Card>
+          </motion.div>
+        )}
+
         {/* Current Stop - Highlighted */}
-        {currentStop && (
+        {currentStop && !tripProgress?.dayCompleted && (
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -440,7 +415,7 @@ export default function Trip() {
         )}
 
         {/* Next Stop Preview with Transport */}
-        {nextStop && nextStop.transport && (
+        {nextStop && nextStop.transport && !tripProgress?.dayCompleted && (
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}

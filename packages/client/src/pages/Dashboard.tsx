@@ -4,7 +4,7 @@ import { motion } from 'framer-motion';
 import toast from 'react-hot-toast';
 import {
   Plus, Map, Calendar, ChevronRight, Settings,
-  Crown, Heart, Sparkles, MapPin, Clock, ArrowRight
+  Crown, Heart, Sparkles, MapPin, Clock
 } from 'lucide-react';
 import { Button, Card, Badge } from '@/components/ui';
 import { useAuthStore } from '@/stores/authStore';
