@@ -1,15 +1,17 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
+import toast from 'react-hot-toast';
 import {
   Sparkles, RefreshCw, Map, Clock, DollarSign, Cloud, Sun, CloudRain,
-  MapPin, Star, Calendar, Bike,
-  Lock, User, LayoutGrid, Check, ArrowRight
+  MapPin, Star, Calendar, Bike, Heart, Share2, Link2, Twitter, Facebook,
+  Lock, User, LayoutGrid, Check, ArrowRight, X
 } from 'lucide-react';
 import { Button, Card, Badge } from '@/components/ui';
 import Header from '@/components/layouts/Header';
 import { useOnboardingStore } from '@/stores/onboardingStore';
 import { useAuthStore } from '@/stores/authStore';
+import { useFavoritesStore } from '@/stores/favoritesStore';
 import { itinerariesAPI } from '@/services/api';
 
 // Mock generated itineraries
@@ -103,9 +105,11 @@ export default function Results() {
   const navigate = useNavigate();
   const { answers, reset } = useOnboardingStore();
   const { isAuthenticated } = useAuthStore();
+  const { toggleFavorite, isFavorite } = useFavoritesStore();
   const [isLoading, setIsLoading] = useState(true);
   const [selectedItinerary, setSelectedItinerary] = useState<ItineraryDisplay | null>(null);
   const [showLoginPrompt, setShowLoginPrompt] = useState(false);
+  const [showShareModal, setShowShareModal] = useState(false);
   const [suggestedItineraries, setSuggestedItineraries] = useState<ItineraryDisplay[]>([]);
   const [allItineraries, setAllItineraries] = useState<ItineraryDisplay[]>([]);
   const [viewMode, setViewMode] = useState<ViewMode>('suggested');
@@ -220,6 +224,52 @@ export default function Results() {
     } else {
       navigate(`/trip/${selectedItinerary?.id}`);
     }
+  };
+
+  const handleToggleFavorite = () => {
+    if (!selectedItinerary) return;
+
+    if (!isAuthenticated) {
+      setShowLoginPrompt(true);
+      return;
+    }
+
+    const added = toggleFavorite({
+      id: selectedItinerary.id,
+      name: selectedItinerary.name,
+      description: selectedItinerary.description,
+      destination: answers.destination || 'Danang',
+      duration: selectedItinerary.duration,
+      estimatedCost: selectedItinerary.estimatedCost,
+      image: selectedItinerary.image,
+      highlights: selectedItinerary.highlights,
+    });
+
+    if (added) {
+      toast.success('Added to favorites!');
+    } else {
+      toast('Removed from favorites', { icon: '💔' });
+    }
+  };
+
+  const handleCopyLink = () => {
+    const url = `${window.location.origin}/itinerary/${selectedItinerary?.id}`;
+    navigator.clipboard.writeText(url);
+    toast.success('Link copied to clipboard!');
+    setShowShareModal(false);
+  };
+
+  const handleShareTwitter = () => {
+    const text = `Check out this amazing ${selectedItinerary?.name} itinerary on Anvago!`;
+    const url = `${window.location.origin}/itinerary/${selectedItinerary?.id}`;
+    window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(url)}`, '_blank');
+    setShowShareModal(false);
+  };
+
+  const handleShareFacebook = () => {
+    const url = `${window.location.origin}/itinerary/${selectedItinerary?.id}`;
+    window.open(`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(url)}`, '_blank');
+    setShowShareModal(false);
   };
 
   if (isLoading) {
@@ -439,6 +489,29 @@ export default function Results() {
                           className="w-full h-full object-cover"
                         />
                         <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
+
+                        {/* Favorite & Share Buttons */}
+                        <div className="absolute top-3 right-3 flex gap-2">
+                          <button
+                            onClick={handleToggleFavorite}
+                            className={`p-2 rounded-lg border-2 border-black shadow-[2px_2px_0px_#000] transition-all hover:shadow-none hover:translate-x-[2px] hover:translate-y-[2px] ${
+                              isFavorite(selectedItinerary.id)
+                                ? 'bg-red-500 text-white'
+                                : 'bg-white text-gray-700'
+                            }`}
+                          >
+                            <Heart
+                              className={`w-4 h-4 ${isFavorite(selectedItinerary.id) ? 'fill-white' : ''}`}
+                            />
+                          </button>
+                          <button
+                            onClick={() => setShowShareModal(true)}
+                            className="p-2 bg-white rounded-lg border-2 border-black shadow-[2px_2px_0px_#000] hover:shadow-none hover:translate-x-[2px] hover:translate-y-[2px] transition-all"
+                          >
+                            <Share2 className="w-4 h-4 text-gray-700" />
+                          </button>
+                        </div>
+
                         <div className="absolute bottom-4 left-5 right-5 text-white">
                           <div className="flex items-start justify-between">
                             <div>
@@ -620,6 +693,93 @@ export default function Results() {
                 >
                   Continue browsing
                 </button>
+              </Card>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Share Modal */}
+      <AnimatePresence>
+        {showShareModal && selectedItinerary && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4"
+            onClick={() => setShowShareModal(false)}
+          >
+            <motion.div
+              initial={{ scale: 0.95, y: 20 }}
+              animate={{ scale: 1, y: 0 }}
+              exit={{ scale: 0.95, y: 20 }}
+              onClick={e => e.stopPropagation()}
+            >
+              <Card className="w-full max-w-sm">
+                <div className="flex items-center justify-between mb-4">
+                  <h2 className="text-lg font-bold">Share Itinerary</h2>
+                  <button
+                    onClick={() => setShowShareModal(false)}
+                    className="p-1 hover:bg-gray-100 rounded-lg"
+                  >
+                    <X className="w-5 h-5 text-gray-500" />
+                  </button>
+                </div>
+
+                <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg mb-4">
+                  <img
+                    src={selectedItinerary.image}
+                    alt={selectedItinerary.name}
+                    className="w-12 h-12 rounded-lg object-cover"
+                  />
+                  <div className="flex-1 min-w-0">
+                    <p className="font-medium text-sm truncate">{selectedItinerary.name}</p>
+                    <p className="text-xs text-gray-500">
+                      {selectedItinerary.duration} days • {answers.destination || 'Danang'}
+                    </p>
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <button
+                    onClick={handleCopyLink}
+                    className="w-full flex items-center gap-3 px-4 py-3 rounded-lg border-2 border-gray-200 hover:border-sky-primary hover:bg-sky-primary/5 transition-all"
+                  >
+                    <div className="w-10 h-10 bg-gray-100 rounded-lg flex items-center justify-center">
+                      <Link2 className="w-5 h-5 text-gray-600" />
+                    </div>
+                    <div className="text-left">
+                      <p className="font-medium text-sm">Copy Link</p>
+                      <p className="text-xs text-gray-500">Share via any app</p>
+                    </div>
+                  </button>
+
+                  <button
+                    onClick={handleShareTwitter}
+                    className="w-full flex items-center gap-3 px-4 py-3 rounded-lg border-2 border-gray-200 hover:border-sky-primary hover:bg-sky-primary/5 transition-all"
+                  >
+                    <div className="w-10 h-10 bg-[#1DA1F2]/10 rounded-lg flex items-center justify-center">
+                      <Twitter className="w-5 h-5 text-[#1DA1F2]" />
+                    </div>
+                    <div className="text-left">
+                      <p className="font-medium text-sm">Twitter / X</p>
+                      <p className="text-xs text-gray-500">Share with your followers</p>
+                    </div>
+                  </button>
+
+                  <button
+                    onClick={handleShareFacebook}
+                    className="w-full flex items-center gap-3 px-4 py-3 rounded-lg border-2 border-gray-200 hover:border-sky-primary hover:bg-sky-primary/5 transition-all"
+                  >
+                    <div className="w-10 h-10 bg-[#1877F2]/10 rounded-lg flex items-center justify-center">
+                      <Facebook className="w-5 h-5 text-[#1877F2]" />
+                    </div>
+                    <div className="text-left">
+                      <p className="font-medium text-sm">Facebook</p>
+                      <p className="text-xs text-gray-500">Share with friends</p>
+                    </div>
+                  </button>
+                </div>
               </Card>
             </motion.div>
           </motion.div>

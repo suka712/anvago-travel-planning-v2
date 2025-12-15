@@ -1,12 +1,14 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
+import toast from 'react-hot-toast';
 import {
   Plus, Map, Calendar, ChevronRight, Settings,
   Crown, Heart, Sparkles, MapPin, Clock, ArrowRight
 } from 'lucide-react';
 import { Button, Card, Badge } from '@/components/ui';
 import { useAuthStore } from '@/stores/authStore';
+import { useFavoritesStore } from '@/stores/favoritesStore';
 import { PremiumModal } from '@/components/modals';
 
 const mockTrips = [
@@ -32,28 +34,17 @@ const mockTrips = [
   },
 ];
 
-const mockSavedItineraries = [
-  {
-    id: '3',
-    name: 'Adventure Seeker\'s Dream',
-    destination: 'Danang',
-    duration: 5,
-    image: 'https://images.unsplash.com/photo-1569288052389-dac9b01c9c05?w=400',
-  },
-  {
-    id: '4',
-    name: 'Relaxation Retreat',
-    destination: 'Danang',
-    duration: 3,
-    image: 'https://images.unsplash.com/photo-1537996194471-e657df975ab4?w=400',
-  },
-];
-
 export default function Dashboard() {
   const navigate = useNavigate();
   const { user } = useAuthStore();
+  const { favorites, removeFavorite } = useFavoritesStore();
   const [activeTab, setActiveTab] = useState<'trips' | 'saved'>('trips');
   const [showPremiumModal, setShowPremiumModal] = useState(false);
+
+  const handleRemoveFavorite = (id: string) => {
+    removeFavorite(id);
+    toast('Removed from favorites', { icon: '💔' });
+  };
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -229,11 +220,7 @@ export default function Dashboard() {
                         </div>
 
                         {trip.status === 'upcoming' && (
-                          <div className="flex items-center justify-between pt-3 border-t border-gray-100 mt-3">
-                            <span className="text-sm text-gray-500">Ready to explore</span>
-                            <Button size="sm" rightIcon={<ArrowRight className="w-4 h-4" />}>
-                              Start Trip
-                            </Button>
+                          <div className="flex items-center justify-between pt-3 mt-3">
                           </div>
                         )}
                       </div>
@@ -249,45 +236,74 @@ export default function Dashboard() {
         )}
 
         {activeTab === 'saved' && (
-          <div className="grid md:grid-cols-2 gap-4">
-            {mockSavedItineraries.map((itinerary, idx) => (
-              <motion.div
-                key={itinerary.id}
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: idx * 0.05 }}
-              >
-                <Card
-                  hoverable
-                  padding="none"
-                  className="overflow-hidden cursor-pointer"
-                  onClick={() => navigate(`/itinerary/${itinerary.id}`)}
-                >
-                  <div className="relative h-36">
-                    <img
-                      src={itinerary.image}
-                      alt={itinerary.name}
-                      className="w-full h-full object-cover"
-                    />
-                    <button className="absolute top-3 right-3 p-2 bg-white rounded-lg border-2 border-black shadow-[2px_2px_0px_#000] hover:shadow-none hover:translate-x-[2px] hover:translate-y-[2px] transition-all">
-                      <Heart className="w-4 h-4 text-red-500 fill-red-500" />
-                    </button>
-                  </div>
-                  <div className="p-4">
-                    <h3 className="font-bold mb-1">{itinerary.name}</h3>
-                    <div className="flex items-center gap-3 text-sm text-gray-500">
-                      <span className="flex items-center gap-1">
-                        <MapPin className="w-3 h-3" />
-                        {itinerary.destination}
-                      </span>
-                      <span>•</span>
-                      <span>{itinerary.duration} days</span>
-                    </div>
-                  </div>
-                </Card>
-              </motion.div>
-            ))}
-          </div>
+          <>
+            {favorites.length === 0 ? (
+              <Card className="text-center py-12">
+                <Heart className="w-16 h-16 text-gray-300 mx-auto mb-4" />
+                <h3 className="text-xl font-bold mb-2">No saved itineraries</h3>
+                <p className="text-gray-600 mb-6">
+                  Browse trips and tap the heart icon to save your favorites!
+                </p>
+                <Button onClick={() => navigate('/discover')}>
+                  Discover Trips
+                </Button>
+              </Card>
+            ) : (
+              <div className="grid md:grid-cols-2 gap-4">
+                {favorites.map((itinerary, idx) => (
+                  <motion.div
+                    key={itinerary.id}
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: idx * 0.05 }}
+                  >
+                    <Card
+                      hoverable
+                      padding="none"
+                      className="overflow-hidden"
+                    >
+                      <div
+                        className="relative h-36 cursor-pointer"
+                        onClick={() => navigate(`/itinerary/${itinerary.id}`)}
+                      >
+                        <img
+                          src={itinerary.image}
+                          alt={itinerary.name}
+                          className="w-full h-full object-cover"
+                        />
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleRemoveFavorite(itinerary.id);
+                          }}
+                          className="absolute top-3 right-3 p-2 bg-red-500 text-white rounded-lg border-2 border-black shadow-[2px_2px_0px_#000] hover:shadow-none hover:translate-x-[2px] hover:translate-y-[2px] transition-all"
+                        >
+                          <Heart className="w-4 h-4 fill-white" />
+                        </button>
+                      </div>
+                      <div
+                        className="p-4 cursor-pointer"
+                        onClick={() => navigate(`/itinerary/${itinerary.id}`)}
+                      >
+                        <h3 className="font-bold mb-1">{itinerary.name}</h3>
+                        <p className="text-sm text-gray-600 line-clamp-1 mb-2">
+                          {itinerary.description}
+                        </p>
+                        <div className="flex items-center gap-3 text-sm text-gray-500">
+                          <span className="flex items-center gap-1">
+                            <MapPin className="w-3 h-3" />
+                            {itinerary.destination}
+                          </span>
+                          <span>•</span>
+                          <span>{itinerary.duration} days</span>
+                        </div>
+                      </div>
+                    </Card>
+                  </motion.div>
+                ))}
+              </div>
+            )}
+          </>
         )}
 
         {/* Premium Upsell */}
