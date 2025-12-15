@@ -313,44 +313,13 @@ export default function Dashboard() {
       </header>
 
       <main className="max-w-7xl mx-auto px-4 py-6 space-y-8">
-        {/* Stats Overview */}
-        <section>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            {[
-              { label: 'Total Trips', value: stats.totalTrips, icon: Map, color: 'from-blue-400 to-blue-600' },
-              { label: 'Active Now', value: stats.activeTrips, icon: Play, color: 'from-green-400 to-green-600' },
-              { label: 'Upcoming', value: stats.upcomingTrips, icon: Calendar, color: 'from-purple-400 to-purple-600' },
-              { label: 'Places Visited', value: stats.placesVisited, icon: MapPin, color: 'from-orange-400 to-orange-600' },
-            ].map((stat, idx) => (
-              <motion.div
-                key={stat.label}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: idx * 0.1 }}
-              >
-                <Card className="relative overflow-hidden">
-                  <div className="flex items-center gap-3">
-                    <div className={`w-12 h-12 rounded-xl bg-gradient-to-br ${stat.color} flex items-center justify-center shadow-lg`}>
-                      <stat.icon className="w-6 h-6 text-white" />
-                    </div>
-                    <div>
-                      <p className="text-2xl font-black">{stat.value}</p>
-                      <p className="text-sm text-gray-500">{stat.label}</p>
-                    </div>
-                  </div>
-                </Card>
-              </motion.div>
-            ))}
-          </div>
-        </section>
-
         {/* Quick Actions */}
         <section>
           <div className="grid md:grid-cols-3 gap-4">
             <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
               <Card
                 hoverable
-                className="bg-gradient-to-br from-sky-400 to-blue-500 text-white cursor-pointer h-full"
+                className="bg-linear-to-br from-sky-400 to-blue-500 text-white cursor-pointer h-full"
                 onClick={() => navigate('/discover')}
               >
                 <div className="flex items-center gap-4">
@@ -409,7 +378,7 @@ export default function Dashboard() {
 
           {/* Trip Tabs */}
           <Card className="p-1.5 mb-4">
-            <div className="flex gap-1 overflow-x-auto">
+            <div className="flex gap-1 overflow-auto">
               {tripTabs.map((tab) => {
                 const count = tab.key === 'all'
                   ? trips.length
@@ -489,7 +458,7 @@ export default function Dashboard() {
                         )}
                       >
                         <div className="flex">
-                          <div className="w-32 h-32 flex-shrink-0 relative overflow-hidden">
+                          <div className="w-32 h-32 shrink-0 relative overflow-hidden">
                             <img
                               src={trip.image}
                               alt={trip.name}
@@ -509,7 +478,7 @@ export default function Dashboard() {
                           </div>
                           <div className="flex-1 p-4 flex flex-col justify-between">
                             <div>
-                              <div className="flex items-center gap-2 mb-1">
+                              <div className="flex items-center gap-2">
                                 <Badge variant={getStatusBadge(trip.status) as any} className="text-[10px]">
                                   {trip.status.charAt(0).toUpperCase() + trip.status.slice(1)}
                                 </Badge>
@@ -517,7 +486,7 @@ export default function Dashboard() {
                                   <span className="text-xs text-gray-500">{trip.progress}% done</span>
                                 )}
                               </div>
-                              <h3 className="font-bold text-lg mb-1 line-clamp-1">{trip.name}</h3>
+                              <h3 className="font-bold text-lg line-clamp-1">{trip.name}</h3>
                               <p className="text-sm text-gray-600 flex items-center gap-1">
                                 <MapPin className="w-3 h-3" />
                                 {trip.destination}
