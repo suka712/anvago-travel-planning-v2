@@ -14,7 +14,7 @@ import { Button, Card, Badge } from '@/components/ui';
 import { useAuthStore } from '@/stores/authStore';
 import { useFavoritesStore } from '@/stores/favoritesStore';
 import { PremiumModal } from '@/components/modals';
-import { itinerariesAPI } from '@/services/api';
+import { itinerariesAPI, tripsAPI } from '@/services/api';
 
 // Trip status types
 type TripStatus = 'active' | 'upcoming' | 'planning' | 'completed';
@@ -44,51 +44,6 @@ interface ItineraryTemplate {
   rating?: number;
   bookings?: number;
 }
-
-// Mock data for demo - will be replaced with API calls
-const mockTrips: Trip[] = [
-  {
-    id: '1',
-    name: 'Beach & Culture Explorer',
-    destination: 'Danang',
-    date: '2024-12-20',
-    status: 'active',
-    image: 'https://images.unsplash.com/photo-1559592413-7cec4d0cae2b?w=400',
-    duration: 3,
-    stops: 12,
-    progress: 35,
-  },
-  {
-    id: '2',
-    name: 'Foodie Paradise Trail',
-    destination: 'Danang',
-    date: '2024-12-25',
-    status: 'upcoming',
-    image: 'https://images.unsplash.com/photo-1555939594-58d7cb561ad1?w=400',
-    duration: 2,
-    stops: 8,
-  },
-  {
-    id: '3',
-    name: 'Hidden Gems Adventure',
-    destination: 'Hoi An',
-    date: '2025-01-05',
-    status: 'planning',
-    image: 'https://images.unsplash.com/photo-1528127269322-539801943592?w=400',
-    duration: 4,
-    stops: 15,
-  },
-  {
-    id: '4',
-    name: 'Sunset Photography Tour',
-    destination: 'Danang',
-    date: '2024-11-15',
-    status: 'completed',
-    image: 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=400',
-    duration: 2,
-    stops: 6,
-  },
-];
 
 const mockItineraries: ItineraryTemplate[] = [
   {
@@ -181,6 +136,7 @@ const tripTabs = [
 
 const vibeFilters = [
   { key: 'all', label: 'All', icon: Globe },
+  { key: 'saved', label: 'Saved', icon: Heart },
   { key: 'adventure', label: 'Adventure', icon: Compass },
   { key: 'foodie', label: 'Foodie', icon: Utensils },
   { key: 'relaxation', label: 'Relaxation', icon: Sun },
@@ -222,31 +178,73 @@ export default function Dashboard() {
   const [activeTab, setActiveTab] = useState<'all' | TripStatus>('all');
   const [vibeFilter, setVibeFilter] = useState('all');
   const [showPremiumModal, setShowPremiumModal] = useState(false);
-  const [trips] = useState<Trip[]>(mockTrips);
+  const [trips, setTrips] = useState<Trip[]>([]);
   const [itineraries, setItineraries] = useState<ItineraryTemplate[]>(mockItineraries);
 
-  // Fetch itineraries on mount
+  // Fetch trips and itineraries on mount
   useEffect(() => {
-    const fetchItineraries = async () => {
+    const fetchData = async () => {
       try {
-        const response = await itinerariesAPI.getTemplates('Danang');
-        if (response.data?.data?.length > 0) {
-          setItineraries(response.data.data);
+        const [tripsRes, itinerariesRes] = await Promise.all([
+          tripsAPI.getAll(),
+          itinerariesAPI.getTemplates('Danang'),
+        ]);
+
+        // Map API trips to our Trip interface
+        if (tripsRes.data?.data) {
+          const mappedTrips: Trip[] = tripsRes.data.data.map((trip: any) => ({
+            id: trip.id,
+            name: trip.itinerary?.title || 'Untitled Trip',
+            destination: trip.itinerary?.city || 'Unknown',
+            date: trip.startDate || trip.createdAt,
+            status: mapTripStatus(trip.status),
+            image: trip.itinerary?.coverImage || 'https://images.unsplash.com/photo-1559592413-7cec4d0cae2b?w=400',
+            duration: trip.itinerary?.durationDays || 1,
+            stops: trip.itinerary?.items?.length || 0,
+            progress: trip.progress,
+          }));
+          setTrips(mappedTrips);
+        }
+
+        if (itinerariesRes.data?.data?.length > 0) {
+          setItineraries(itinerariesRes.data.data);
         }
       } catch {
-        // Fall back to mock data
+        // Fall back to empty/mock data
       }
     };
-    fetchItineraries();
+    fetchData();
   }, []);
+
+  // Map API status to our TripStatus type
+  const mapTripStatus = (status: string): TripStatus => {
+    switch (status?.toLowerCase()) {
+      case 'in_progress':
+      case 'active':
+        return 'active';
+      case 'scheduled':
+      case 'upcoming':
+        return 'upcoming';
+      case 'draft':
+      case 'planning':
+        return 'planning';
+      case 'completed':
+      case 'done':
+        return 'completed';
+      default:
+        return 'planning';
+    }
+  };
 
   const filteredTrips = trips.filter(trip =>
     activeTab === 'all' || trip.status === activeTab
   );
 
-  const filteredItineraries = itineraries.filter(it =>
-    vibeFilter === 'all' || it.targetVibes.includes(vibeFilter)
-  );
+  const filteredItineraries = itineraries.filter(it => {
+    if (vibeFilter === 'all') return true;
+    if (vibeFilter === 'saved') return isFavorite(it.id);
+    return it.targetVibes.includes(vibeFilter);
+  });
 
   const handleToggleFavorite = (itinerary: ItineraryTemplate) => {
     const wasFavorite = isFavorite(itinerary.id);
@@ -526,24 +524,34 @@ export default function Dashboard() {
           </div>
 
           {/* Vibe Filters */}
-          <div className="flex gap-2 mb-4 overflow-x-auto pb-2">
-            {vibeFilters.map((vibe) => (
-              <motion.button
-                key={vibe.key}
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                onClick={() => setVibeFilter(vibe.key)}
-                className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-all ${
-                  vibeFilter === vibe.key
-                    ? 'bg-black text-white shadow-lg'
-                    : 'bg-white border-2 border-gray-200 hover:border-gray-300'
-                }`}
-              >
-                <vibe.icon className="w-4 h-4" />
-                {vibe.label}
-              </motion.button>
-            ))}
-          </div>
+          <Card className="p-1.5 mb-4">
+            <div className="flex gap-1 overflow-x-auto">
+              {vibeFilters.map((vibe) => {
+                const count = vibe.key === 'saved' ? favorites.length : null;
+                return (
+                  <button
+                    key={vibe.key}
+                    onClick={() => setVibeFilter(vibe.key)}
+                    className={`flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium transition-all whitespace-nowrap ${
+                      vibeFilter === vibe.key
+                        ? 'bg-sky-primary text-black shadow-[2px_2px_0px_#000] border-2 border-black'
+                        : 'text-gray-600 hover:bg-gray-100'
+                    }`}
+                  >
+                    <vibe.icon className={`w-4 h-4 ${vibe.key === 'saved' && vibeFilter === 'saved' ? 'fill-current' : ''}`} />
+                    {vibe.label}
+                    {count !== null && (
+                      <span className={`ml-1 px-1.5 py-0.5 rounded-full text-xs ${
+                        vibeFilter === vibe.key ? 'bg-black/10' : 'bg-gray-200'
+                      }`}>
+                        {count}
+                      </span>
+                    )}
+                  </button>
+                );
+              })}
+            </div>
+          </Card>
 
           {/* Itinerary Cards */}
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -678,53 +686,6 @@ export default function Dashboard() {
             </motion.div>
           )}
         </section>
-
-        {/* Saved Itineraries Quick Access */}
-        {favorites.length > 0 && (
-          <section>
-            <div className="flex items-center justify-between mb-4">
-              <div className="flex items-center gap-2">
-                <Heart className="w-5 h-5 text-red-500 fill-red-500" />
-                <h2 className="text-xl font-bold">Saved Itineraries</h2>
-                <Badge variant="secondary" className="text-xs">{favorites.length}</Badge>
-              </div>
-              <Button variant="ghost" size="sm" onClick={() => navigate('/favorites')}>
-                View All <ChevronRight className="w-4 h-4 ml-1" />
-              </Button>
-            </div>
-
-            <div className="flex gap-4 overflow-x-auto pb-2">
-              {favorites.slice(0, 4).map((fav, idx) => (
-                <motion.div
-                  key={fav.id}
-                  initial={{ opacity: 0, x: 20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ delay: idx * 0.1 }}
-                  className="flex-shrink-0 w-64"
-                >
-                  <Card
-                    hoverable
-                    padding="none"
-                    className="overflow-hidden cursor-pointer"
-                    onClick={() => navigate(`/itinerary/${fav.id}`)}
-                  >
-                    <div className="relative h-32">
-                      <img
-                        src={fav.image}
-                        alt={fav.name}
-                        className="w-full h-full object-cover"
-                      />
-                    </div>
-                    <div className="p-3">
-                      <h4 className="font-bold text-sm line-clamp-1">{fav.name}</h4>
-                      <p className="text-xs text-gray-500">{fav.destination} • {fav.duration} days</p>
-                    </div>
-                  </Card>
-                </motion.div>
-              ))}
-            </div>
-          </section>
-        )}
 
         {/* Premium Upsell */}
         {!user?.isPremium && (

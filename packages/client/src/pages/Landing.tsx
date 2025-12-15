@@ -4,7 +4,7 @@ import { motion } from 'framer-motion';
 import {
   MapPin, Sparkles, Compass, Zap, Clock, Shield,
   ChevronRight, Play, Star, Globe,
-  Bike, Coffee, Camera, Sunset, User, LogOut
+  Bike, Coffee, Camera, Sunset
 } from 'lucide-react';
 import { Button, Card, Badge } from '@/components/ui';
 import { DemoModal } from '@/components/modals';
@@ -75,7 +75,7 @@ const vibeIcons = [
 export default function Landing() {
   const navigate = useNavigate();
   const [showDemo, setShowDemo] = useState(false);
-  const { isAuthenticated, user, logout } = useAuthStore();
+  const { isAuthenticated, user } = useAuthStore();
 
   // Redirect logged-in users to dashboard
   useEffect(() => {
@@ -117,22 +117,15 @@ export default function Landing() {
               className="flex items-center gap-4"
             >
               {isAuthenticated ? (
-                <>
-                  <Button variant="ghost" onClick={() => navigate('/dashboard')}>
-                    <User className="w-4 h-4 mr-2" />
-                    {user?.name || 'Dashboard'}
-                  </Button>
-                  <Button
-                    variant="secondary"
-                    onClick={() => {
-                      logout();
-                      navigate('/');
-                    }}
-                  >
-                    <LogOut className="w-4 h-4 mr-2" />
-                    Sign Out
-                  </Button>
-                </>
+                <button
+                  onClick={() => navigate('/dashboard')}
+                  className="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-black/5 transition-colors"
+                >
+                  <div className="w-8 h-8 bg-sky-primary rounded-full border-2 border-black flex items-center justify-center">
+                    <span className="text-sm font-bold">{user?.name?.[0] || 'U'}</span>
+                  </div>
+                  <span className="font-medium">{user?.name?.split(' ')[0] || 'Dashboard'}</span>
+                </button>
               ) : (
                 <>
                   <Button variant="ghost" onClick={() => navigate('/login')}>
