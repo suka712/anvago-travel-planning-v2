@@ -8,6 +8,7 @@ import {
   MapPin, RefreshCw, Filter, ArrowRight
 } from 'lucide-react';
 import { Button, Card, Badge } from '@/components/ui';
+import Header from '@/components/layouts/Header';
 import { useAuthStore } from '@/stores/authStore';
 import { PremiumModal } from '@/components/modals';
 
@@ -217,12 +218,15 @@ export default function Plan() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <header className="sticky top-0 z-30 bg-white border-b-2 border-black">
-        <div className="max-w-7xl mx-auto px-4 py-4">
+      {/* Global Header */}
+      <Header />
+
+      {/* Page Info Bar */}
+      <div className="bg-white border-b border-gray-200">
+        <div className="max-w-7xl mx-auto px-4 py-3">
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-xl font-bold">Customize Your Trip</h1>
+              <h1 className="text-lg font-bold">Customize Your Trip</h1>
               <p className="text-sm text-gray-600">Drag to reorder, click search to replace locations</p>
             </div>
             <div className="flex items-center gap-3">
@@ -248,7 +252,7 @@ export default function Plan() {
             </div>
           </div>
         </div>
-      </header>
+      </div>
 
       {/* Main Content */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">

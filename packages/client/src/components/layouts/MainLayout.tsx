@@ -1,5 +1,5 @@
 import { Outlet, Link, useLocation } from 'react-router-dom';
-import { Menu, X, LogOut, Map, Calendar, Settings } from 'lucide-react';
+import { Menu, X, LogOut, Map, Settings } from 'lucide-react';
 import { useState } from 'react';
 import { useAuthStore } from '@/stores/authStore';
 import { Button } from '@/components/ui';
@@ -79,11 +79,11 @@ export default function MainLayout() {
                         My Trips
                       </Link>
                       <Link
-                        to="/dashboard"
+                        to="/settings"
                         className="flex items-center gap-2 px-4 py-2 hover:bg-gray-100"
                       >
-                        <Calendar className="w-4 h-4" />
-                        Itineraries
+                        <Settings className="w-4 h-4" />
+                        Settings
                       </Link>
                       {user.isAdmin && (
                         <Link
@@ -146,6 +146,13 @@ export default function MainLayout() {
                     onClick={() => setMobileMenuOpen(false)}
                   >
                     My Trips
+                  </Link>
+                  <Link
+                    to="/settings"
+                    className="block py-2 font-medium"
+                    onClick={() => setMobileMenuOpen(false)}
+                  >
+                    Settings
                   </Link>
                   {user.isAdmin && (
                     <Link

@@ -7,6 +7,7 @@ import {
   Lock, User, LayoutGrid, Check, ArrowRight
 } from 'lucide-react';
 import { Button, Card, Badge } from '@/components/ui';
+import Header from '@/components/layouts/Header';
 import { useOnboardingStore } from '@/stores/onboardingStore';
 import { useAuthStore } from '@/stores/authStore';
 import { itinerariesAPI } from '@/services/api';
@@ -262,13 +263,16 @@ export default function Results() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <header className="sticky top-0 z-20 bg-white border-b-2 border-black">
-        <div className="max-w-6xl mx-auto px-4 py-4">
+      {/* Global Header */}
+      <Header />
+
+      {/* Trip Info Bar */}
+      <div className="bg-white border-b border-gray-200">
+        <div className="max-w-6xl mx-auto px-4 py-3">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
               <div>
-                <h1 className="text-xl font-bold">{answers.destination || 'Danang'}</h1>
+                <h1 className="text-lg font-bold">{answers.destination || 'Danang'}</h1>
                 <p className="text-sm text-gray-500">
                   {answers.duration || 3} days • {answers.activityLevel || 'balanced'} pace
                 </p>
@@ -296,7 +300,7 @@ export default function Results() {
             </div>
           </div>
         </div>
-      </header>
+      </div>
 
       <main className="max-w-6xl mx-auto px-4 py-6">
         <div className="grid lg:grid-cols-5 gap-6">

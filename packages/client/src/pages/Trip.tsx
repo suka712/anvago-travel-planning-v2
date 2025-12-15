@@ -1,13 +1,14 @@
 import { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import toast from 'react-hot-toast';
 import {
   Navigation, MapPin, Clock, ChevronRight, CheckCircle2, Circle,
   CloudRain, Bike, Car, Footprints, Map, Maximize2, Minimize2,
-  X, Play, Pause, SkipForward, Home, RefreshCw, Coffee, ChevronDown
+  X, Play, Pause, SkipForward, RefreshCw, Coffee, ChevronDown
 } from 'lucide-react';
 import { Button, Card, Badge } from '@/components/ui';
+import Header from '@/components/layouts/Header';
 
 interface TripStop {
   id: string;
@@ -103,7 +104,6 @@ const weatherAlert = {
 
 export default function Trip() {
   const { id: _id } = useParams();
-  const navigate = useNavigate();
   const [stops, setStops] = useState<TripStop[]>(mockTripStops);
   const [isPaused, setIsPaused] = useState(false);
   const [showTransportModal, setShowTransportModal] = useState(false);
@@ -202,17 +202,14 @@ export default function Trip() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Header - Clean design matching app system */}
-      <header className="sticky top-0 z-30 bg-white border-b-2 border-black">
-        <div className="max-w-4xl mx-auto px-4 py-4">
+      {/* Global Header */}
+      <Header />
+
+      {/* Trip Info Bar */}
+      <div className="bg-white border-b border-gray-200">
+        <div className="max-w-4xl mx-auto px-4 py-3">
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              <button
-                onClick={() => navigate('/')}
-                className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
-              >
-                <Home className="w-5 h-5" />
-              </button>
+            <div className="flex items-center gap-3">
               <div>
                 <div className="flex items-center gap-2">
                   <h1 className="font-bold text-lg">Day 1</h1>
@@ -252,7 +249,7 @@ export default function Trip() {
             </div>
           </div>
         </div>
-      </header>
+      </div>
 
       {/* Main Content - Constrained width */}
       <main className="max-w-4xl mx-auto px-4 py-6">
