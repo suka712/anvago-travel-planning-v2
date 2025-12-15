@@ -192,17 +192,23 @@ export default function Dashboard() {
 
         // Map API trips to our Trip interface
         if (tripsRes.data?.data) {
-          const mappedTrips: Trip[] = tripsRes.data.data.map((trip: any) => ({
-            id: trip.id,
-            name: trip.itinerary?.title || 'Untitled Trip',
-            destination: trip.itinerary?.city || 'Unknown',
-            date: trip.startDate || trip.createdAt,
-            status: mapTripStatus(trip.status),
-            image: trip.itinerary?.coverImage || 'https://images.unsplash.com/photo-1559592413-7cec4d0cae2b?w=400',
-            duration: trip.itinerary?.durationDays || 1,
-            stops: trip.itinerary?.items?.length || 0,
-            progress: trip.progress,
-          }));
+          const mappedTrips: Trip[] = tripsRes.data.data.map((trip: any) => {
+            const progress = trip.totalItems > 0
+              ? Math.round((trip.completedItems / trip.totalItems) * 100)
+              : 0;
+
+            return {
+              id: trip.id,
+              name: trip.itinerary?.title || 'Untitled Trip',
+              destination: trip.itinerary?.city || 'Unknown',
+              date: trip.scheduledStart || trip.createdAt,
+              status: mapTripStatus(trip.status),
+              image: trip.itinerary?.coverImage || 'https://images.unsplash.com/photo-1559592413-7cec4d0cae2b?w=400',
+              duration: trip.itinerary?.durationDays || 1,
+              stops: trip.itinerary?.items?.length || 0,
+              progress: trip.status === 'active' ? progress : undefined,
+            };
+          });
           setTrips(mappedTrips);
         }
 
@@ -217,22 +223,21 @@ export default function Dashboard() {
   }, []);
 
   // Map API status to our TripStatus type
+  // DB statuses: scheduled, active, paused, completed, cancelled
   const mapTripStatus = (status: string): TripStatus => {
     switch (status?.toLowerCase()) {
-      case 'in_progress':
       case 'active':
         return 'active';
       case 'scheduled':
-      case 'upcoming':
         return 'upcoming';
-      case 'draft':
-      case 'planning':
-        return 'planning';
+      case 'paused':
+        return 'planning'; // Paused trips show as planning
       case 'completed':
-      case 'done':
         return 'completed';
+      case 'cancelled':
+        return 'completed'; // Cancelled trips show as completed/past
       default:
-        return 'planning';
+        return 'upcoming';
     }
   };
 
@@ -240,11 +245,24 @@ export default function Dashboard() {
     activeTab === 'all' || trip.status === activeTab
   );
 
-  const filteredItineraries = itineraries.filter(it => {
-    if (vibeFilter === 'all') return true;
-    if (vibeFilter === 'saved') return isFavorite(it.id);
-    return it.targetVibes.includes(vibeFilter);
-  });
+  const filteredItineraries: ItineraryTemplate[] = vibeFilter === 'saved'
+    ? favorites.map(fav => ({
+        id: fav.id,
+        name: fav.name,
+        description: fav.description,
+        coverImage: fav.image,
+        city: fav.destination,
+        durationDays: fav.duration,
+        highlights: fav.highlights || [],
+        targetVibes: [],
+        matchScore: undefined,
+        rating: undefined,
+        bookings: undefined,
+      }))
+    : itineraries.filter(it => {
+        if (vibeFilter === 'all') return true;
+        return it.targetVibes.includes(vibeFilter);
+      });
 
   const handleToggleFavorite = (itinerary: ItineraryTemplate) => {
     const wasFavorite = isFavorite(itinerary.id);

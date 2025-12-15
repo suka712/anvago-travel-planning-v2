@@ -174,20 +174,20 @@ export const itinerariesAPI = {
 export const tripsAPI = {
   getAll: () =>
     api.get('/trips'),
-  
+
   getById: (id: string) =>
     api.get(`/trips/${id}`),
-  
-  create: (itineraryId: string, startDate: string) =>
-    api.post('/trips', { itineraryId, startDate }),
-  
-  update: (id: string, data: any) =>
-    api.put(`/trips/${id}`, data),
-  
-  updateStatus: (id: string, status: string) =>
-    api.patch(`/trips/${id}/status`, { status }),
-  
-  logEvent: (id: string, event: any) =>
+
+  create: (itineraryId: string, scheduledStart: string) =>
+    api.post('/trips', { itineraryId, scheduledStart }),
+
+  update: (id: string, data: { status?: string; currentDayNumber?: number; currentItemIndex?: number }) =>
+    api.patch(`/trips/${id}`, data),
+
+  advance: (id: string) =>
+    api.post(`/trips/${id}/advance`),
+
+  logEvent: (id: string, event: { type: string; message: string; data?: any }) =>
     api.post(`/trips/${id}/events`, event),
 };
 

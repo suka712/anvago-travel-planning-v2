@@ -135,6 +135,7 @@ interface TripProgressState {
   replaceStop: (tripId: string, oldStopId: string, newStop: TripStop) => void;
   advanceToNextDay: (tripId: string) => void;
   resetTrip: (tripId: string) => void;
+  deleteTrip: (tripId: string) => void;
 }
 
 export const useTripProgressStore = create<TripProgressState>()(
@@ -336,6 +337,13 @@ export const useTripProgressStore = create<TripProgressState>()(
               },
             },
           };
+        });
+      },
+
+      deleteTrip: (tripId) => {
+        set(state => {
+          const { [tripId]: _, ...remainingTrips } = state.trips;
+          return { trips: remainingTrips };
         });
       },
     }),

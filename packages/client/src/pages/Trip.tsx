@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import toast from 'react-hot-toast';
@@ -6,11 +6,43 @@ import {
   Navigation, MapPin, Clock, ChevronRight, CheckCircle2, Circle,
   CloudRain, Bike, Car, Footprints, Map, Maximize2, Minimize2,
   X, Play, Pause, SkipForward, RefreshCw, Coffee, ChevronDown,
-  Sunrise, PartyPopper
+  Sunrise, PartyPopper, Loader2
 } from 'lucide-react';
 import { Button, Card, Badge } from '@/components/ui';
 import Header from '@/components/layouts/Header';
 import { useTripProgressStore, TripStop } from '@/stores/tripProgressStore';
+import { tripsAPI } from '@/services/api';
+
+// API trip data type
+interface ApiTrip {
+  id: string;
+  status: 'scheduled' | 'active' | 'paused' | 'completed' | 'cancelled';
+  currentDayNumber: number;
+  currentItemIndex: number;
+  completedItems: number;
+  totalItems: number;
+  itinerary: {
+    id: string;
+    title: string;
+    city: string;
+    durationDays: number;
+    items: Array<{
+      id: string;
+      dayNumber: number;
+      orderIndex: number;
+      startTime: string;
+      duration: number;
+      notes?: string;
+      location: {
+        id: string;
+        name: string;
+        address: string;
+        category: string;
+        imageUrl?: string;
+      };
+    }>;
+  };
+}
 
 // Alternative stop for smart reroute
 const alternativeStop: TripStop = {
@@ -31,17 +63,15 @@ const weatherAlert = {
   icon: CloudRain,
 };
 
-// Get trip name from Dashboard mock data (in real app, this would come from API)
-const tripNames: Record<string, string> = {
-  '1': 'Beach & Culture Explorer',
-  '2': 'Foodie Paradise Trail',
-};
-
 export default function Trip() {
   const { id } = useParams();
   const navigate = useNavigate();
   const tripId = id || 'default';
-  const tripName = tripNames[tripId] || 'My Trip';
+
+  // API state
+  const [apiTrip, setApiTrip] = useState<ApiTrip | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isSyncing, setIsSyncing] = useState(false);
 
   // Get store actions and data
   const { startTrip, getTrip, markStopComplete, skipStop, replaceStop, advanceToNextDay, resetTrip } = useTripProgressStore();
@@ -56,12 +86,44 @@ export default function Trip() {
   const [mapExpanded, setMapExpanded] = useState(false);
   const [showTimeline, setShowTimeline] = useState(true);
 
-  // Initialize trip if it doesn't exist
+  // Get trip name from local mapping for demo purposes
+  const tripNames: Record<string, string> = {
+    '1': 'Beach & Culture Explorer',
+    '2': 'Foodie Paradise Trail',
+  };
+  const localTripName = tripNames[tripId] || 'Beach & Culture Explorer';
+
+  // Fetch trip from API on mount, fall back to local template for demo
   useEffect(() => {
-    if (!tripProgress) {
-      startTrip(tripId, tripName);
-    }
-  }, [tripId, tripName, tripProgress, startTrip]);
+    const fetchTrip = async () => {
+      try {
+        setIsLoading(true);
+        const response = await tripsAPI.getById(tripId);
+        const trip = response.data.data as ApiTrip;
+        setApiTrip(trip);
+
+        // Initialize local store with API data if not already initialized
+        if (!tripProgress) {
+          startTrip(tripId, trip.itinerary.title);
+        }
+
+        // If trip is scheduled, activate it
+        if (trip.status === 'scheduled') {
+          await tripsAPI.update(tripId, { status: 'active' });
+          setApiTrip(prev => prev ? { ...prev, status: 'active' } : null);
+        }
+      } catch (err) {
+        // API failed - fall back to local template for demo purposes
+        if (!tripProgress) {
+          startTrip(tripId, localTripName);
+        }
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchTrip();
+  }, [tripId, localTripName]);
 
   // Get stops from store, or empty array while initializing
   const stops = tripProgress?.stops || [];
@@ -88,26 +150,76 @@ export default function Trip() {
     }
   }, [showWeatherAlert, rerouteAccepted]);
 
-  const handleMarkComplete = (stopId: string) => {
+  // Sync progress to API
+  const syncToApi = useCallback(async (action: 'advance' | 'complete' | 'day_advance') => {
+    if (!apiTrip) return;
+
+    setIsSyncing(true);
+    try {
+      if (action === 'advance') {
+        const response = await tripsAPI.advance(tripId);
+        const updatedTrip = response.data.data;
+        setApiTrip(updatedTrip);
+
+        // Check if trip completed
+        if (updatedTrip.isComplete || updatedTrip.status === 'completed') {
+          toast.success('Trip completed! Great job!');
+        }
+      } else if (action === 'complete') {
+        await tripsAPI.update(tripId, { status: 'completed' });
+        setApiTrip(prev => prev ? { ...prev, status: 'completed' } : null);
+      } else if (action === 'day_advance') {
+        const nextDay = (apiTrip.currentDayNumber || 1) + 1;
+        await tripsAPI.update(tripId, { currentDayNumber: nextDay, currentItemIndex: 0 });
+        setApiTrip(prev => prev ? { ...prev, currentDayNumber: nextDay, currentItemIndex: 0 } : null);
+      }
+    } catch (err) {
+      console.error('Failed to sync to API:', err);
+      // Don't show error toast - local state is still updated
+    } finally {
+      setIsSyncing(false);
+    }
+  }, [apiTrip, tripId]);
+
+  const handleMarkComplete = async (stopId: string) => {
     const stop = stops.find(s => s.id === stopId);
     markStopComplete(tripId, stopId);
     toast.success(`${stop?.name} completed!`);
+
+    // Sync to API
+    await syncToApi('advance');
   };
 
-  const handleSkip = (stopId: string) => {
+  const handleSkip = async (stopId: string) => {
     const stop = stops.find(s => s.id === stopId);
     skipStop(tripId, stopId);
     toast(`Skipped ${stop?.name}`, { icon: '⏭️' });
+
+    // Sync to API (skip also advances)
+    await syncToApi('advance');
   };
 
-  const handleAdvanceDay = () => {
+  const handleAdvanceDay = async () => {
     advanceToNextDay(tripId);
     toast.success(`Starting Day ${(tripProgress?.currentDay || 1) + 1}!`, { icon: '🌅' });
+
+    // Sync day advance to API
+    await syncToApi('day_advance');
   };
 
-  const handleRestartTrip = () => {
+  const handleRestartTrip = async () => {
     resetTrip(tripId);
     toast.success('Trip restarted! Enjoy your adventure again!');
+
+    // Reset API trip status
+    if (apiTrip) {
+      try {
+        await tripsAPI.update(tripId, { status: 'active', currentDayNumber: 1, currentItemIndex: 0 });
+        setApiTrip(prev => prev ? { ...prev, status: 'active', currentDayNumber: 1, currentItemIndex: 0 } : null);
+      } catch (err) {
+        console.error('Failed to reset trip in API:', err);
+      }
+    }
   };
 
   // Handle accepting the smart reroute swap
@@ -131,6 +243,26 @@ export default function Trip() {
     }
   };
 
+  // Derive trip name from API or local store
+  const tripName = apiTrip?.itinerary?.title || tripProgress?.tripName || 'My Trip';
+  const totalDays = apiTrip?.itinerary?.durationDays || tripProgress?.totalDays || 3;
+  const currentDay = apiTrip?.currentDayNumber || tripProgress?.currentDay || 1;
+
+  // Loading state
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-gray-50">
+        <Header />
+        <div className="flex items-center justify-center h-[calc(100vh-64px)]">
+          <div className="text-center">
+            <Loader2 className="w-8 h-8 animate-spin text-sky-primary mx-auto mb-4" />
+            <p className="text-gray-500">Loading your trip...</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Global Header */}
@@ -144,12 +276,15 @@ export default function Trip() {
               <div>
                 <div className="flex items-center gap-2">
                   <h1 className="font-bold text-lg">
-                    Day {tripProgress?.currentDay || 1}
-                    <span className="text-gray-400 font-normal"> / {tripProgress?.totalDays || 3}</span>
+                    Day {currentDay}
+                    <span className="text-gray-400 font-normal"> / {totalDays}</span>
                   </h1>
                   <Badge variant="secondary" className="text-xs">
                     {tripProgress?.tripTheme || 'Explorer'}
                   </Badge>
+                  {isSyncing && (
+                    <Loader2 className="w-3 h-3 animate-spin text-gray-400" />
+                  )}
                 </div>
                 <p className="text-sm text-gray-500">
                   {currentTime} • {completedCount}/{stops.length} stops today
@@ -298,13 +433,13 @@ export default function Trip() {
               <div className="w-16 h-16 bg-amber-100 rounded-full mx-auto mb-4 flex items-center justify-center">
                 <Sunrise className="w-8 h-8 text-amber-600" />
               </div>
-              <h2 className="text-2xl font-bold mb-2">Day {tripProgress.currentDay} Complete!</h2>
+              <h2 className="text-2xl font-bold mb-2">Day {currentDay} Complete!</h2>
               <p className="text-gray-600 mb-6">
-                Great job today! Ready for Day {tripProgress.currentDay + 1}?
+                Great job today! Ready for Day {currentDay + 1}?
               </p>
               <div className="flex gap-3 justify-center max-w-xs mx-auto">
                 <Button onClick={handleAdvanceDay} className="flex-1">
-                  Start Day {tripProgress.currentDay + 1}
+                  Start Day {currentDay + 1}
                 </Button>
               </div>
             </Card>
@@ -312,7 +447,7 @@ export default function Trip() {
         )}
 
         {/* Trip Complete Card */}
-        {tripProgress?.tripCompleted && (
+        {(tripProgress?.tripCompleted || apiTrip?.status === 'completed') && (
           <motion.div
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
@@ -324,10 +459,10 @@ export default function Trip() {
               </div>
               <h2 className="text-2xl font-bold mb-2">Trip Complete!</h2>
               <p className="text-gray-600 mb-2">
-                Congratulations! You've completed your {tripProgress.totalDays}-day adventure.
+                Congratulations! You've completed your {totalDays}-day adventure.
               </p>
               <p className="text-sm text-gray-500 mb-6">
-                {tripProgress.tripName}
+                {tripName}
               </p>
               <div className="flex gap-3 justify-center max-w-md mx-auto">
                 <Button onClick={handleRestartTrip} variant="secondary" className="flex-1">
