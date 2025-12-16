@@ -33,6 +33,7 @@ interface Trip {
 
 interface ItineraryTemplate {
   id: string;
+  itineraryId?: string; // The actual itinerary ID for navigation
   name: string;
   description: string;
   coverImage: string;
@@ -587,7 +588,7 @@ export default function Dashboard() {
                 >
                   <div
                     className="relative h-40 cursor-pointer overflow-hidden"
-                    onClick={() => navigate(`/itinerary/${itinerary.id}`)}
+                    onClick={() => navigate(`/itinerary/${itinerary.itineraryId || itinerary.id}`)}
                   >
                     <img
                       src={itinerary.coverImage}
@@ -633,7 +634,7 @@ export default function Dashboard() {
                   <div className="p-4">
                     <h3
                       className="font-bold text-lg mb-1 line-clamp-1 cursor-pointer hover:text-blue-600 transition-colors"
-                      onClick={() => navigate(`/itinerary/${itinerary.id}`)}
+                      onClick={() => navigate(`/itinerary/${itinerary.itineraryId || itinerary.id}`)}
                     >
                       {itinerary.name}
                     </h3>
@@ -676,7 +677,7 @@ export default function Dashboard() {
                         size="sm"
                         variant="ghost"
                         className="ml-auto"
-                        onClick={() => navigate(`/itinerary/${itinerary.id}`)}
+                        onClick={() => navigate(`/itinerary/${itinerary.itineraryId || itinerary.id}`)}
                       >
                         View <ArrowRight className="w-3 h-3 ml-1" />
                       </Button>
