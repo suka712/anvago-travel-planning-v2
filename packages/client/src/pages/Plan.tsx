@@ -16,7 +16,9 @@ import {
   GripVertical, Plus, Minus, Trash2, Search, Clock, DollarSign,
   Sparkles, Wand2, Star, X, ChevronDown, ChevronUp,
   Car, Footprints, Sun, Lock, Crown, Heart,
-  MapPin, RefreshCw, Filter, ArrowRight
+  MapPin, RefreshCw, Filter, ArrowRight, Check, ArrowUpDown,
+  Loader2, Zap, Leaf, Users, Camera, Coffee, TrendingUp,
+  ThumbsUp, Gem, Timer, ArrowLeftRight
 } from 'lucide-react';
 import { Button, Card, Badge } from '@/components/ui';
 import Header from '@/components/layouts/Header';
@@ -125,8 +127,50 @@ export default function Plan() {
   const [showOptimizeModal, setShowOptimizeModal] = useState(false);
   const [showPremiumModal, setShowPremiumModal] = useState(false);
   const [premiumFeature, setPremiumFeature] = useState('');
+
+  // AI Optimize state
+  const [optimizeStep, setOptimizeStep] = useState<'select' | 'loading' | 'results'>('select');
+  const [selectedOptimization, setSelectedOptimization] = useState<string | null>(null);
+  const [showMoreOptions, setShowMoreOptions] = useState(false);
+  const [optimizedItinerary, setOptimizedItinerary] = useState<DayPlan[] | null>(null);
+  const [optimizationChanges, setOptimizationChanges] = useState<Array<{
+    type: 'moved' | 'swapped' | 'removed' | 'added';
+    itemName: string;
+    from?: string;
+    to?: string;
+    reason: string;
+  }>>([]);
   // For replace search: track which item is being replaced
   const [replaceTarget, setReplaceTarget] = useState<{ dayIndex: number; itemId: string; itemName: string } | null>(null);
+
+  // Smart Replace state
+  const [showSmartReplace, setShowSmartReplace] = useState(false);
+  const [smartReplaceTab, setSmartReplaceTab] = useState<'smart' | 'search'>('smart');
+  const [smartReplaceLoading, setSmartReplaceLoading] = useState(false);
+  const [smartSuggestions, setSmartSuggestions] = useState<{
+    category: string;
+    icon: any;
+    color: string;
+    items: Array<{
+      id: string;
+      name: string;
+      type: string;
+      durationMins: number;
+      cost: number;
+      rating: number;
+      image: string;
+      isLocalGem?: boolean;
+      reason: string;
+      comparison: {
+        ratingDiff: number;
+        costDiff: number;
+        durationDiff: number;
+      };
+    }>;
+  }[]>([]);
+  const [selectedSuggestion, setSelectedSuggestion] = useState<string | null>(null);
+  const [showComparison, setShowComparison] = useState(false);
+  const [currentItemForReplace, setCurrentItemForReplace] = useState<ItineraryItem | null>(null);
   // Search card state (right panel)
   const [cardSearchQuery, setCardSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState<Array<{
@@ -328,6 +372,208 @@ export default function Plan() {
     setReplaceTarget({ dayIndex, itemId, itemName });
     setSearchQuery('');
     setShowSearch(true);
+  };
+
+  // Open Smart Replace modal
+  const openSmartReplace = (dayIndex: number, item: ItineraryItem) => {
+    setReplaceTarget({ dayIndex, itemId: item.id, itemName: item.name });
+    setCurrentItemForReplace(item);
+    setSmartReplaceTab('smart');
+    setSelectedSuggestion(null);
+    setShowComparison(false);
+    setShowSmartReplace(true);
+    setSmartReplaceLoading(true);
+
+    // Get context: previous and next items
+    const dayItems = itinerary[dayIndex].items;
+    const itemIndex = dayItems.findIndex(i => i.id === item.id);
+    const prevItem = itemIndex > 0 ? dayItems[itemIndex - 1] : null;
+    const nextItem = itemIndex < dayItems.length - 1 ? dayItems[itemIndex + 1] : null;
+
+    // Simulate AI generating smart suggestions
+    setTimeout(() => {
+      const suggestions = generateSmartSuggestions(item, prevItem, nextItem, dayIndex);
+      setSmartSuggestions(suggestions);
+      setSmartReplaceLoading(false);
+    }, 1500);
+  };
+
+  // Generate smart suggestions based on context
+  const generateSmartSuggestions = (
+    currentItem: ItineraryItem,
+    prevItem: ItineraryItem | null,
+    nextItem: ItineraryItem | null,
+    dayIndex: number
+  ) => {
+    // Mock data - in production this would come from an AI/ML service
+    const mockSuggestionsByType: Record<string, Array<{
+      id: string;
+      name: string;
+      type: string;
+      durationMins: number;
+      cost: number;
+      rating: number;
+      image: string;
+      isLocalGem?: boolean;
+    }>> = {
+      food: [
+        { id: 'sg1', name: 'Mì Quảng Bà Mua', type: 'food', durationMins: 45, cost: 40000, rating: 4.9, image: 'https://images.unsplash.com/photo-1555939594-58d7cb561ad1?w=200', isLocalGem: true },
+        { id: 'sg2', name: 'Bánh Tráng Thịt Heo', type: 'food', durationMins: 60, cost: 80000, rating: 4.7, image: 'https://images.unsplash.com/photo-1555939594-58d7cb561ad1?w=200' },
+        { id: 'sg3', name: 'Bún Chả Cá', type: 'food', durationMins: 40, cost: 35000, rating: 4.8, image: 'https://images.unsplash.com/photo-1555939594-58d7cb561ad1?w=200', isLocalGem: true },
+        { id: 'sg4', name: 'Nhà Hàng Apsara', type: 'food', durationMins: 90, cost: 350000, rating: 4.6, image: 'https://images.unsplash.com/photo-1555939594-58d7cb561ad1?w=200' },
+      ],
+      beach: [
+        { id: 'sg5', name: 'Non Nuoc Beach', type: 'beach', durationMins: 150, cost: 0, rating: 4.8, image: 'https://images.unsplash.com/photo-1537996194471-e657df975ab4?w=200' },
+        { id: 'sg6', name: 'Bãi Bụt Beach', type: 'beach', durationMins: 120, cost: 0, rating: 4.7, image: 'https://images.unsplash.com/photo-1537996194471-e657df975ab4?w=200', isLocalGem: true },
+        { id: 'sg7', name: 'An Bang Beach', type: 'beach', durationMins: 180, cost: 50000, rating: 4.9, image: 'https://images.unsplash.com/photo-1537996194471-e657df975ab4?w=200' },
+      ],
+      nature: [
+        { id: 'sg8', name: 'Son Tra Peninsula', type: 'nature', durationMins: 180, cost: 0, rating: 4.9, image: 'https://images.unsplash.com/photo-1559592413-7cec4d0cae2b?w=200' },
+        { id: 'sg9', name: 'Ba Na Hills', type: 'nature', durationMins: 360, cost: 850000, rating: 4.6, image: 'https://images.unsplash.com/photo-1569288052389-dac9b01c9c05?w=200' },
+        { id: 'sg10', name: 'Hai Van Pass', type: 'nature', durationMins: 240, cost: 200000, rating: 4.8, image: 'https://images.unsplash.com/photo-1559592413-7cec4d0cae2b?w=200' },
+      ],
+      shopping: [
+        { id: 'sg11', name: 'Con Market', type: 'shopping', durationMins: 90, cost: 0, rating: 4.5, image: 'https://images.unsplash.com/photo-1555939594-58d7cb561ad1?w=200' },
+        { id: 'sg12', name: 'Vincom Plaza', type: 'shopping', durationMins: 120, cost: 0, rating: 4.3, image: 'https://images.unsplash.com/photo-1555939594-58d7cb561ad1?w=200' },
+      ],
+      attraction: [
+        { id: 'sg13', name: 'Linh Ung Pagoda', type: 'attraction', durationMins: 90, cost: 0, rating: 4.8, image: 'https://images.unsplash.com/photo-1559592413-7cec4d0cae2b?w=200' },
+        { id: 'sg14', name: 'Museum of Cham Sculpture', type: 'attraction', durationMins: 90, cost: 60000, rating: 4.7, image: 'https://images.unsplash.com/photo-1559592413-7cec4d0cae2b?w=200' },
+        { id: 'sg15', name: 'Asia Park', type: 'attraction', durationMins: 180, cost: 200000, rating: 4.5, image: 'https://images.unsplash.com/photo-1583417319070-4a69db38a482?w=200' },
+      ],
+      museum: [
+        { id: 'sg16', name: 'Da Nang Museum', type: 'museum', durationMins: 90, cost: 20000, rating: 4.4, image: 'https://images.unsplash.com/photo-1559592413-7cec4d0cae2b?w=200' },
+        { id: 'sg17', name: '3D Art Museum', type: 'museum', durationMins: 120, cost: 150000, rating: 4.6, image: 'https://images.unsplash.com/photo-1559592413-7cec4d0cae2b?w=200' },
+      ],
+    };
+
+    const currentType = currentItem.type;
+    const currentCost = currentItem.cost || 0;
+    const currentRating = currentItem.rating || 4.5;
+    const currentDuration = currentItem.durationMins;
+
+    // Get suggestions for the same type and some variety
+    const sameTypeSuggestions = mockSuggestionsByType[currentType] || [];
+    const otherTypes = Object.keys(mockSuggestionsByType).filter(t => t !== currentType);
+    const varietySuggestions = otherTypes.flatMap(t => mockSuggestionsByType[t]?.slice(0, 1) || []);
+
+    // Build categorized suggestions with reasons
+    const categories = [];
+
+    // Similar Experiences
+    const similar = sameTypeSuggestions.slice(0, 2).map(s => ({
+      ...s,
+      reason: `Similar ${currentType} experience with ${s.rating > currentRating ? 'higher' : 'comparable'} ratings`,
+      comparison: {
+        ratingDiff: Number((s.rating - currentRating).toFixed(1)),
+        costDiff: s.cost - currentCost,
+        durationDiff: s.durationMins - currentDuration,
+      },
+    }));
+    if (similar.length > 0) {
+      categories.push({
+        category: 'Similar Experiences',
+        icon: RefreshCw,
+        color: 'text-blue-500',
+        items: similar,
+      });
+    }
+
+    // Higher Rated
+    const higherRated = [...sameTypeSuggestions, ...varietySuggestions]
+      .filter(s => s.rating > currentRating)
+      .sort((a, b) => b.rating - a.rating)
+      .slice(0, 2)
+      .map(s => ({
+        ...s,
+        reason: `Rated ${(s.rating - currentRating).toFixed(1)} stars higher by travelers`,
+        comparison: {
+          ratingDiff: Number((s.rating - currentRating).toFixed(1)),
+          costDiff: s.cost - currentCost,
+          durationDiff: s.durationMins - currentDuration,
+        },
+      }));
+    if (higherRated.length > 0) {
+      categories.push({
+        category: 'Higher Rated',
+        icon: TrendingUp,
+        color: 'text-green-500',
+        items: higherRated,
+      });
+    }
+
+    // Budget Friendly
+    const budgetFriendly = [...sameTypeSuggestions, ...varietySuggestions]
+      .filter(s => s.cost < currentCost)
+      .sort((a, b) => a.cost - b.cost)
+      .slice(0, 2)
+      .map(s => ({
+        ...s,
+        reason: `Save ${((currentCost - s.cost) / 1000).toFixed(0)}k VND while enjoying a great experience`,
+        comparison: {
+          ratingDiff: Number((s.rating - currentRating).toFixed(1)),
+          costDiff: s.cost - currentCost,
+          durationDiff: s.durationMins - currentDuration,
+        },
+      }));
+    if (budgetFriendly.length > 0) {
+      categories.push({
+        category: 'Budget Friendly',
+        icon: DollarSign,
+        color: 'text-emerald-500',
+        items: budgetFriendly,
+      });
+    }
+
+    // Local Hidden Gems
+    const localGems = [...sameTypeSuggestions, ...varietySuggestions]
+      .filter(s => s.isLocalGem)
+      .slice(0, 2)
+      .map(s => ({
+        ...s,
+        reason: 'A local favorite spot most tourists miss - authentic experience guaranteed',
+        comparison: {
+          ratingDiff: Number((s.rating - currentRating).toFixed(1)),
+          costDiff: s.cost - currentCost,
+          durationDiff: s.durationMins - currentDuration,
+        },
+      }));
+    if (localGems.length > 0) {
+      categories.push({
+        category: 'Local Hidden Gems',
+        icon: Gem,
+        color: 'text-purple-500',
+        items: localGems,
+      });
+    }
+
+    // Best for Time of Day (context-aware)
+    const timeContext = dayIndex === 0 ? 'morning' : 'afternoon';
+    const timeBasedReason = prevItem?.type === 'food'
+      ? `Perfect activity after a meal - ${nextItem ? `and leads nicely to ${nextItem.name}` : 'great way to continue your day'}`
+      : nextItem?.type === 'food'
+        ? `Ideal before your meal at ${nextItem.name} - builds up an appetite!`
+        : `Great ${timeContext} activity that fits your schedule flow`;
+
+    const timeBased = varietySuggestions.slice(0, 2).map(s => ({
+      ...s,
+      reason: timeBasedReason,
+      comparison: {
+        ratingDiff: Number((s.rating - currentRating).toFixed(1)),
+        costDiff: s.cost - currentCost,
+        durationDiff: s.durationMins - currentDuration,
+      },
+    }));
+    if (timeBased.length > 0) {
+      categories.push({
+        category: 'Best for This Moment',
+        icon: Timer,
+        color: 'text-amber-500',
+        items: timeBased,
+      });
+    }
+
+    return categories;
   };
 
   // Adjust duration of an activity (in 15-minute increments)
@@ -671,8 +917,8 @@ export default function Plan() {
                                       <Button
                                         variant="ghost"
                                         size="sm"
-                                        onClick={() => openReplaceSearch(dayIndex, item.id, item.name)}
-                                        title="Search & replace"
+                                        onClick={() => openSmartReplace(dayIndex, item)}
+                                        title="Smart Replace"
                                         className="p-2"
                                       >
                                         <RefreshCw className="w-4 h-4" />
@@ -777,23 +1023,21 @@ export default function Plan() {
                   {/* Go AI Optimize */}
                   <button
                     onClick={() => {
-                      if (!isPremium) {
-                        setPremiumFeature('Go AI Optimization');
-                        setShowPremiumModal(true);
-                      } else {
-                        setShowOptimizeModal(true);
-                      }
+                      setOptimizeStep('select');
+                      setSelectedOptimization(null);
+                      setShowMoreOptions(false);
+                      setShowOptimizeModal(true);
                     }}
                     className="w-full p-3 rounded-lg border-2 border-gray-200 hover:border-sky-primary hover:bg-sky-primary/5 transition-all text-left"
                   >
                     <div className="flex items-center gap-3">
-                      <div className="w-9 h-9 rounded-lg bg-linear-to-br from-sky-500 to-sky-200 flex items-center justify-center shrink-0">
+                      <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-sky-500 to-sky-300 flex items-center justify-center shrink-0">
                         <Wand2 className="w-4 h-4 text-white" />
                       </div>
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2">
                           <h3 className="font-semibold text-sm">Go AI Optimize</h3>
-                          {!isPremium && <Lock className="w-3 h-3 text-gray-400" />}
+                          <Badge variant="success" className="text-[10px] px-1.5 py-0">NEW</Badge>
                         </div>
                         <p className="text-xs text-gray-500 truncate">Optimize route & timing</p>
                       </div>
@@ -1102,40 +1346,230 @@ export default function Plan() {
               animate={{ scale: 1 }}
               exit={{ scale: 0.95 }}
               onClick={e => e.stopPropagation()}
-              className="w-full max-w-lg"
+              className="w-full max-w-lg max-h-[90vh] overflow-y-auto"
             >
               <Card>
-                <div className="text-center mb-6">
-                  <Wand2 className="w-12 h-12 text-sky-primary mx-auto mb-3" />
-                  <h2 className="text-xl font-bold">Go AI Optimization</h2>
-                  <p className="text-gray-600">Let AI optimize your itinerary</p>
-                </div>
+                {/* Step 1: Select Optimization */}
+                {optimizeStep === 'select' && (
+                  <>
+                    <div className="text-center mb-6">
+                      <div className="w-14 h-14 bg-gradient-to-br from-sky-500 to-sky-300 rounded-2xl flex items-center justify-center mx-auto mb-3">
+                        <Wand2 className="w-7 h-7 text-white" />
+                      </div>
+                      <h2 className="text-xl font-bold">Go AI Optimization</h2>
+                      <p className="text-gray-600 text-sm">What would you like to optimize?</p>
+                    </div>
 
-                <div className="grid grid-cols-2 gap-3 mb-6">
-                  {[
-                    { id: 'walking', label: 'Minimize Walking', icon: Footprints },
-                    { id: 'budget', label: 'Optimize Budget', icon: DollarSign },
-                    { id: 'time', label: 'Save Time', icon: Clock },
-                    { id: 'weather', label: 'Weather Smart', icon: Sun },
-                  ].map(option => (
+                    {/* Primary Options */}
+                    <div className="grid grid-cols-2 gap-3 mb-3">
+                      {[
+                        { id: 'route', label: 'Shortest Route', icon: MapPin, desc: 'Minimize travel time' },
+                        { id: 'budget', label: 'Save Money', icon: DollarSign, desc: 'Find cheaper alternatives' },
+                        { id: 'time', label: 'Save Time', icon: Clock, desc: 'Efficient scheduling' },
+                        { id: 'walking', label: 'Less Walking', icon: Footprints, desc: 'Reduce walking distance' },
+                      ].map(option => (
+                        <button
+                          key={option.id}
+                          onClick={() => setSelectedOptimization(option.id)}
+                          className={`p-4 rounded-xl border-2 transition-all text-left ${
+                            selectedOptimization === option.id
+                              ? 'border-sky-primary bg-sky-primary/5'
+                              : 'border-gray-200 hover:border-gray-300'
+                          }`}
+                        >
+                          <option.icon className={`w-5 h-5 mb-2 ${selectedOptimization === option.id ? 'text-sky-primary' : 'text-gray-500'}`} />
+                          <span className="font-medium text-sm block">{option.label}</span>
+                          <span className="text-xs text-gray-500">{option.desc}</span>
+                        </button>
+                      ))}
+                    </div>
+
+                    {/* Show More Options */}
+                    <AnimatePresence>
+                      {showMoreOptions && (
+                        <motion.div
+                          initial={{ height: 0, opacity: 0 }}
+                          animate={{ height: 'auto', opacity: 1 }}
+                          exit={{ height: 0, opacity: 0 }}
+                          className="overflow-hidden"
+                        >
+                          <div className="grid grid-cols-2 gap-3 mb-3">
+                            {[
+                              { id: 'weather', label: 'Weather Smart', icon: Sun, desc: 'Avoid bad weather' },
+                              { id: 'energy', label: 'Energy Saving', icon: Zap, desc: 'Balance activity levels' },
+                              { id: 'eco', label: 'Eco Friendly', icon: Leaf, desc: 'Lower carbon footprint' },
+                              { id: 'crowd', label: 'Avoid Crowds', icon: Users, desc: 'Less busy times' },
+                              { id: 'photo', label: 'Best Photos', icon: Camera, desc: 'Optimal lighting times' },
+                              { id: 'foodie', label: 'Foodie Focus', icon: Coffee, desc: 'Best meal timings' },
+                            ].map(option => (
+                              <button
+                                key={option.id}
+                                onClick={() => setSelectedOptimization(option.id)}
+                                className={`p-4 rounded-xl border-2 transition-all text-left ${
+                                  selectedOptimization === option.id
+                                    ? 'border-sky-primary bg-sky-primary/5'
+                                    : 'border-gray-200 hover:border-gray-300'
+                                }`}
+                              >
+                                <option.icon className={`w-5 h-5 mb-2 ${selectedOptimization === option.id ? 'text-sky-primary' : 'text-gray-500'}`} />
+                                <span className="font-medium text-sm block">{option.label}</span>
+                                <span className="text-xs text-gray-500">{option.desc}</span>
+                              </button>
+                            ))}
+                          </div>
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
+
                     <button
-                      key={option.id}
-                      className="p-4 rounded-xl border-2 hover:border-sky-primary transition-colors text-left"
+                      onClick={() => setShowMoreOptions(!showMoreOptions)}
+                      className="w-full py-2 text-sm text-sky-primary font-medium hover:underline flex items-center justify-center gap-1 mb-4"
                     >
-                      <option.icon className="w-6 h-6 text-sky-primary mb-2" />
-                      <span className="font-medium text-sm">{option.label}</span>
+                      {showMoreOptions ? 'Show Less' : 'Show More Options'}
+                      <ChevronDown className={`w-4 h-4 transition-transform ${showMoreOptions ? 'rotate-180' : ''}`} />
                     </button>
-                  ))}
-                </div>
 
-                <div className="flex gap-3">
-                  <Button variant="secondary" className="flex-1" onClick={() => setShowOptimizeModal(false)}>
-                    Cancel
-                  </Button>
-                  <Button className="flex-1" leftIcon={<Sparkles className="w-4 h-4" />}>
-                    Optimize Now
-                  </Button>
-                </div>
+                    <div className="flex gap-3">
+                      <Button variant="secondary" className="flex-1" onClick={() => setShowOptimizeModal(false)}>
+                        Cancel
+                      </Button>
+                      <Button
+                        className="flex-1"
+                        disabled={!selectedOptimization}
+                        leftIcon={<Sparkles className="w-4 h-4" />}
+                        onClick={() => {
+                          setOptimizeStep('loading');
+                          // Simulate AI processing
+                          setTimeout(() => {
+                            // Mock optimized data based on selection
+                            const mockChanges = [
+                              { type: 'moved' as const, itemName: 'Bánh Mì Bà Lan', from: 'Day 1, #2', to: 'Day 1, #3', reason: 'Better to visit Han Market first while it\'s less crowded, then grab breakfast nearby.' },
+                              { type: 'swapped' as const, itemName: 'Han Market', from: 'Day 1, #3', to: 'Day 1, #2', reason: 'Morning is the best time to visit the market for fresh produce and fewer tourists.' },
+                              { type: 'moved' as const, itemName: 'Beach Club Relaxation', from: 'Day 1, #5', to: 'Day 1, #4', reason: 'Moving beach time earlier takes advantage of calmer afternoon waters.' },
+                            ];
+
+                            // Create optimized itinerary (swap items 2 and 3 in day 1)
+                            const optimized = JSON.parse(JSON.stringify(itinerary)) as DayPlan[];
+                            const day1Items = optimized[0].items;
+                            [day1Items[1], day1Items[2]] = [day1Items[2], day1Items[1]];
+                            [day1Items[3], day1Items[4]] = [day1Items[4], day1Items[3]];
+
+                            setOptimizedItinerary(optimized);
+                            setOptimizationChanges(mockChanges);
+                            setOptimizeStep('results');
+                          }, 2000);
+                        }}
+                      >
+                        Optimize Now
+                      </Button>
+                    </div>
+                  </>
+                )}
+
+                {/* Step 2: Loading */}
+                {optimizeStep === 'loading' && (
+                  <div className="py-12 text-center">
+                    <div className="w-16 h-16 bg-gradient-to-br from-sky-500 to-sky-300 rounded-2xl flex items-center justify-center mx-auto mb-4 animate-pulse">
+                      <Wand2 className="w-8 h-8 text-white" />
+                    </div>
+                    <Loader2 className="w-6 h-6 text-sky-primary animate-spin mx-auto mb-4" />
+                    <h3 className="font-bold text-lg mb-2">Optimizing Your Itinerary</h3>
+                    <p className="text-gray-500 text-sm">
+                      Analyzing routes, timings, and local insights...
+                    </p>
+                  </div>
+                )}
+
+                {/* Step 3: Results */}
+                {optimizeStep === 'results' && optimizedItinerary && (
+                  <>
+                    <div className="text-center mb-6">
+                      <div className="w-14 h-14 bg-green-100 rounded-2xl flex items-center justify-center mx-auto mb-3">
+                        <Check className="w-7 h-7 text-green-600" />
+                      </div>
+                      <h2 className="text-xl font-bold">Optimization Complete!</h2>
+                      <p className="text-gray-600 text-sm">We found {optimizationChanges.length} improvements for your trip</p>
+                    </div>
+
+                    {/* Summary Stats */}
+                    <div className="grid grid-cols-3 gap-3 mb-6">
+                      <div className="text-center p-3 bg-green-50 rounded-xl">
+                        <p className="text-lg font-bold text-green-600">-25 min</p>
+                        <p className="text-xs text-gray-600">Travel Time</p>
+                      </div>
+                      <div className="text-center p-3 bg-sky-50 rounded-xl">
+                        <p className="text-lg font-bold text-sky-600">Better</p>
+                        <p className="text-xs text-gray-600">Route Flow</p>
+                      </div>
+                      <div className="text-center p-3 bg-amber-50 rounded-xl">
+                        <p className="text-lg font-bold text-amber-600">Optimal</p>
+                        <p className="text-xs text-gray-600">Timing</p>
+                      </div>
+                    </div>
+
+                    {/* Changes List */}
+                    <div className="mb-6">
+                      <h3 className="font-semibold text-sm mb-3 flex items-center gap-2">
+                        <ArrowUpDown className="w-4 h-4 text-sky-primary" />
+                        Proposed Changes
+                      </h3>
+                      <div className="space-y-3">
+                        {optimizationChanges.map((change, idx) => (
+                          <div
+                            key={idx}
+                            className="p-3 rounded-xl border-2 border-sky-primary/30 bg-sky-primary/5"
+                          >
+                            <div className="flex items-start gap-3">
+                              <div className="w-6 h-6 rounded-full bg-sky-primary text-white flex items-center justify-center text-xs font-bold shrink-0 mt-0.5">
+                                {idx + 1}
+                              </div>
+                              <div className="flex-1 min-w-0">
+                                <div className="flex items-center gap-2 mb-1">
+                                  <span className="font-semibold text-sm">{change.itemName}</span>
+                                  <Badge variant="secondary" className="text-[10px]">
+                                    {change.type === 'moved' ? 'Moved' : change.type === 'swapped' ? 'Swapped' : change.type}
+                                  </Badge>
+                                </div>
+                                {change.from && change.to && (
+                                  <p className="text-xs text-gray-600 mb-1">
+                                    {change.from} → {change.to}
+                                  </p>
+                                )}
+                                <p className="text-xs text-gray-700">{change.reason}</p>
+                              </div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+
+                    <div className="flex gap-3">
+                      <Button
+                        variant="secondary"
+                        className="flex-1"
+                        onClick={() => {
+                          setOptimizedItinerary(null);
+                          setOptimizationChanges([]);
+                          setShowOptimizeModal(false);
+                        }}
+                      >
+                        Discard
+                      </Button>
+                      <Button
+                        className="flex-1"
+                        leftIcon={<Check className="w-4 h-4" />}
+                        onClick={() => {
+                          setItinerary(optimizedItinerary);
+                          setOptimizedItinerary(null);
+                          setOptimizationChanges([]);
+                          setShowOptimizeModal(false);
+                        }}
+                      >
+                        Accept Changes
+                      </Button>
+                    </div>
+                  </>
+                )}
               </Card>
             </motion.div>
           </motion.div>
