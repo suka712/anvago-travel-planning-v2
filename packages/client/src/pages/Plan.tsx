@@ -18,7 +18,7 @@ import {
   Car, Footprints, Sun, Lock, Crown, Heart,
   MapPin, RefreshCw, Filter, ArrowRight, Check, ArrowUpDown,
   Loader2, Zap, Leaf, Users, Camera, Coffee, TrendingUp,
-  ThumbsUp, Gem, Timer, ArrowLeftRight
+  Gem, Timer, ArrowLeftRight
 } from 'lucide-react';
 import { Button, Card, Badge } from '@/components/ui';
 import Header from '@/components/layouts/Header';
@@ -365,13 +365,6 @@ export default function Plan() {
     }));
     setShowSearch(false);
     setReplaceTarget(null);
-  };
-
-  // Open search modal for replacing a specific item
-  const openReplaceSearch = (dayIndex: number, itemId: string, itemName: string) => {
-    setReplaceTarget({ dayIndex, itemId, itemName });
-    setSearchQuery('');
-    setShowSearch(true);
   };
 
   // Open Smart Replace modal
@@ -1570,6 +1563,374 @@ export default function Plan() {
                     </div>
                   </>
                 )}
+              </Card>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Smart Replace Modal */}
+      <AnimatePresence>
+        {showSmartReplace && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center px-4"
+            onClick={() => {
+              setShowSmartReplace(false);
+              setReplaceTarget(null);
+              setCurrentItemForReplace(null);
+            }}
+          >
+            <motion.div
+              initial={{ scale: 0.95 }}
+              animate={{ scale: 1 }}
+              exit={{ scale: 0.95 }}
+              onClick={e => e.stopPropagation()}
+              className="w-full max-w-2xl max-h-[90vh] overflow-hidden flex flex-col"
+            >
+              <Card className="flex flex-col max-h-[90vh]">
+                {/* Header */}
+                <div className="flex items-center justify-between pb-4 border-b shrink-0">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 bg-gradient-to-br from-purple-500 to-purple-300 rounded-xl flex items-center justify-center">
+                      <Sparkles className="w-5 h-5 text-white" />
+                    </div>
+                    <div>
+                      <h2 className="font-bold text-lg">Smart Replace</h2>
+                      {currentItemForReplace && (
+                        <p className="text-sm text-gray-500">
+                          Replacing: <span className="font-medium text-gray-700">{currentItemForReplace.name}</span>
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                  <button
+                    onClick={() => {
+                      setShowSmartReplace(false);
+                      setReplaceTarget(null);
+                      setCurrentItemForReplace(null);
+                    }}
+                    className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+                  >
+                    <X className="w-5 h-5 text-gray-500" />
+                  </button>
+                </div>
+
+                {/* Tabs */}
+                <div className="flex gap-2 py-3 border-b shrink-0">
+                  <button
+                    onClick={() => setSmartReplaceTab('smart')}
+                    className={`flex items-center gap-2 px-4 py-2 rounded-lg font-medium text-sm transition-all ${
+                      smartReplaceTab === 'smart'
+                        ? 'bg-purple-100 text-purple-700'
+                        : 'text-gray-600 hover:bg-gray-100'
+                    }`}
+                  >
+                    <Sparkles className="w-4 h-4" />
+                    Smart Suggestions
+                  </button>
+                  <button
+                    onClick={() => setSmartReplaceTab('search')}
+                    className={`flex items-center gap-2 px-4 py-2 rounded-lg font-medium text-sm transition-all ${
+                      smartReplaceTab === 'search'
+                        ? 'bg-gray-200 text-gray-800'
+                        : 'text-gray-600 hover:bg-gray-100'
+                    }`}
+                  >
+                    <Search className="w-4 h-4" />
+                    Manual Search
+                  </button>
+                </div>
+
+                {/* Content */}
+                <div className="flex-1 overflow-y-auto py-4">
+                  {/* Smart Suggestions Tab */}
+                  {smartReplaceTab === 'smart' && (
+                    <>
+                      {smartReplaceLoading ? (
+                        <div className="py-12 text-center">
+                          <div className="w-12 h-12 bg-gradient-to-br from-purple-500 to-purple-300 rounded-xl flex items-center justify-center mx-auto mb-4 animate-pulse">
+                            <Sparkles className="w-6 h-6 text-white" />
+                          </div>
+                          <Loader2 className="w-5 h-5 text-purple-500 animate-spin mx-auto mb-3" />
+                          <p className="font-medium text-gray-800">Analyzing your itinerary...</p>
+                          <p className="text-sm text-gray-500 mt-1">Finding the best alternatives based on context</p>
+                        </div>
+                      ) : (
+                        <div className="space-y-6">
+                          {smartSuggestions.map((category) => {
+                            const CategoryIcon = category.icon;
+                            return (
+                              <div key={category.category}>
+                                <div className="flex items-center gap-2 mb-3">
+                                  <CategoryIcon className={`w-4 h-4 ${category.color}`} />
+                                  <h3 className="font-semibold text-sm">{category.category}</h3>
+                                </div>
+                                <div className="space-y-2">
+                                  {category.items.map((suggestion) => (
+                                    <div
+                                      key={suggestion.id}
+                                      onClick={() => {
+                                        setSelectedSuggestion(suggestion.id);
+                                        setShowComparison(true);
+                                      }}
+                                      className={`p-3 rounded-xl border-2 cursor-pointer transition-all ${
+                                        selectedSuggestion === suggestion.id
+                                          ? 'border-purple-500 bg-purple-50'
+                                          : 'border-gray-200 hover:border-purple-300 hover:bg-gray-50'
+                                      }`}
+                                    >
+                                      <div className="flex items-start gap-3">
+                                        <div className="w-14 h-14 rounded-lg overflow-hidden shrink-0 border border-gray-200">
+                                          <img src={suggestion.image} alt={suggestion.name} className="w-full h-full object-cover" />
+                                        </div>
+                                        <div className="flex-1 min-w-0">
+                                          <div className="flex items-center gap-2 mb-1">
+                                            <h4 className="font-semibold text-sm">{suggestion.name}</h4>
+                                            {suggestion.isLocalGem && (
+                                              <Badge variant="warning" className="text-[10px]">
+                                                <Star className="w-2.5 h-2.5 mr-0.5" />
+                                                Gem
+                                              </Badge>
+                                            )}
+                                          </div>
+                                          <p className="text-xs text-gray-600 mb-2 line-clamp-2">{suggestion.reason}</p>
+                                          <div className="flex items-center gap-3 text-xs">
+                                            <span className="flex items-center gap-1 text-gray-500">
+                                              <Star className="w-3 h-3 fill-yellow-400 text-yellow-400" />
+                                              {suggestion.rating}
+                                              {suggestion.comparison.ratingDiff !== 0 && (
+                                                <span className={suggestion.comparison.ratingDiff > 0 ? 'text-green-600' : 'text-red-500'}>
+                                                  ({suggestion.comparison.ratingDiff > 0 ? '+' : ''}{suggestion.comparison.ratingDiff})
+                                                </span>
+                                              )}
+                                            </span>
+                                            <span className="flex items-center gap-1 text-gray-500">
+                                              <DollarSign className="w-3 h-3" />
+                                              {formatCost(suggestion.cost)}
+                                              {suggestion.comparison.costDiff !== 0 && (
+                                                <span className={suggestion.comparison.costDiff < 0 ? 'text-green-600' : 'text-red-500'}>
+                                                  ({suggestion.comparison.costDiff < 0 ? '' : '+'}{(suggestion.comparison.costDiff / 1000).toFixed(0)}k)
+                                                </span>
+                                              )}
+                                            </span>
+                                            <span className="flex items-center gap-1 text-gray-500">
+                                              <Clock className="w-3 h-3" />
+                                              {formatDuration(suggestion.durationMins)}
+                                            </span>
+                                          </div>
+                                        </div>
+                                        <div className="shrink-0">
+                                          <ArrowLeftRight className={`w-5 h-5 ${selectedSuggestion === suggestion.id ? 'text-purple-500' : 'text-gray-300'}`} />
+                                        </div>
+                                      </div>
+                                    </div>
+                                  ))}
+                                </div>
+                              </div>
+                            );
+                          })}
+                          {smartSuggestions.length === 0 && !smartReplaceLoading && (
+                            <div className="text-center py-8 text-gray-500">
+                              <Sparkles className="w-10 h-10 mx-auto mb-2 opacity-50" />
+                              <p>No smart suggestions available</p>
+                              <p className="text-sm mt-1">Try using manual search instead</p>
+                            </div>
+                          )}
+                        </div>
+                      )}
+                    </>
+                  )}
+
+                  {/* Manual Search Tab */}
+                  {smartReplaceTab === 'search' && (
+                    <div>
+                      {/* Search Input */}
+                      <div className="relative mb-4">
+                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                        <input
+                          type="text"
+                          placeholder="Search for a replacement..."
+                          value={searchQuery}
+                          onChange={e => setSearchQuery(e.target.value)}
+                          className="w-full pl-10 pr-4 py-2.5 rounded-lg border-2 border-gray-200 focus:border-purple-500 focus:outline-none transition-colors"
+                          autoFocus
+                        />
+                      </div>
+
+                      {/* Search Results */}
+                      <div className="space-y-2">
+                        {isModalSearching && (
+                          <div className="text-center py-4 text-gray-400">
+                            <div className="w-5 h-5 border-2 border-purple-500 border-t-transparent rounded-full animate-spin mx-auto mb-2" />
+                            Searching...
+                          </div>
+                        )}
+                        {!isModalSearching && modalSearchResults.length === 0 && searchQuery.length >= 2 && (
+                          <div className="text-center py-8 text-gray-500">
+                            <Search className="w-10 h-10 mx-auto mb-2 opacity-50" />
+                            <p>No results found for "{searchQuery}"</p>
+                          </div>
+                        )}
+                        {modalSearchResults.map((result) => (
+                          <div
+                            key={result.id}
+                            onClick={() => {
+                              const itemWithDefaults = {
+                                ...result,
+                                cost: result.cost ?? 0,
+                                rating: result.rating ?? 4.5,
+                              };
+                              handleReplaceItem(itemWithDefaults);
+                              setShowSmartReplace(false);
+                              setCurrentItemForReplace(null);
+                            }}
+                            className="flex items-center gap-3 p-3 rounded-xl border-2 border-gray-200 hover:border-purple-500 hover:bg-purple-50 cursor-pointer transition-all"
+                          >
+                            <div className="w-12 h-12 rounded-lg overflow-hidden shrink-0 border border-gray-200">
+                              <img src={result.image} alt={result.name} className="w-full h-full object-cover" />
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-center gap-2">
+                                <h4 className="font-medium text-sm">{result.name}</h4>
+                                {result.isLocalGem && (
+                                  <Badge variant="warning" className="text-[10px]">Gem</Badge>
+                                )}
+                              </div>
+                              <div className="flex items-center gap-2 text-xs text-gray-500 mt-1">
+                                <span className="capitalize">{result.type}</span>
+                                <span>•</span>
+                                <span>{formatDuration(result.durationMins)}</span>
+                                <span>•</span>
+                                <span>{formatCost(result.cost)}</span>
+                              </div>
+                            </div>
+                            <ArrowRight className="w-5 h-5 text-purple-500 shrink-0" />
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                {/* Comparison View */}
+                <AnimatePresence>
+                  {showComparison && selectedSuggestion && currentItemForReplace && (
+                    <motion.div
+                      initial={{ height: 0, opacity: 0 }}
+                      animate={{ height: 'auto', opacity: 1 }}
+                      exit={{ height: 0, opacity: 0 }}
+                      className="border-t pt-4 shrink-0"
+                    >
+                      {(() => {
+                        const suggestion = smartSuggestions
+                          .flatMap(c => c.items)
+                          .find(s => s.id === selectedSuggestion);
+                        if (!suggestion) return null;
+
+                        return (
+                          <div>
+                            <h3 className="font-semibold text-sm mb-3 flex items-center gap-2">
+                              <ArrowLeftRight className="w-4 h-4 text-purple-500" />
+                              Comparison
+                            </h3>
+                            <div className="grid grid-cols-2 gap-4 mb-4">
+                              {/* Current */}
+                              <div className="p-3 rounded-xl bg-gray-100 border-2 border-gray-200">
+                                <p className="text-xs text-gray-500 mb-2 font-medium">CURRENT</p>
+                                <p className="font-semibold text-sm mb-2">{currentItemForReplace.name}</p>
+                                <div className="space-y-1 text-xs text-gray-600">
+                                  <div className="flex justify-between">
+                                    <span>Rating</span>
+                                    <span className="font-medium">{currentItemForReplace.rating || 'N/A'}</span>
+                                  </div>
+                                  <div className="flex justify-between">
+                                    <span>Cost</span>
+                                    <span className="font-medium">{formatCost(currentItemForReplace.cost)}</span>
+                                  </div>
+                                  <div className="flex justify-between">
+                                    <span>Duration</span>
+                                    <span className="font-medium">{formatDuration(currentItemForReplace.durationMins)}</span>
+                                  </div>
+                                </div>
+                              </div>
+                              {/* New */}
+                              <div className="p-3 rounded-xl bg-purple-50 border-2 border-purple-300">
+                                <p className="text-xs text-purple-600 mb-2 font-medium">REPLACEMENT</p>
+                                <p className="font-semibold text-sm mb-2">{suggestion.name}</p>
+                                <div className="space-y-1 text-xs text-gray-600">
+                                  <div className="flex justify-between">
+                                    <span>Rating</span>
+                                    <span className="font-medium flex items-center gap-1">
+                                      {suggestion.rating}
+                                      {suggestion.comparison.ratingDiff !== 0 && (
+                                        <span className={`text-[10px] ${suggestion.comparison.ratingDiff > 0 ? 'text-green-600' : 'text-red-500'}`}>
+                                          {suggestion.comparison.ratingDiff > 0 ? '↑' : '↓'}
+                                        </span>
+                                      )}
+                                    </span>
+                                  </div>
+                                  <div className="flex justify-between">
+                                    <span>Cost</span>
+                                    <span className="font-medium flex items-center gap-1">
+                                      {formatCost(suggestion.cost)}
+                                      {suggestion.comparison.costDiff !== 0 && (
+                                        <span className={`text-[10px] ${suggestion.comparison.costDiff < 0 ? 'text-green-600' : 'text-red-500'}`}>
+                                          {suggestion.comparison.costDiff < 0 ? '↓' : '↑'}
+                                        </span>
+                                      )}
+                                    </span>
+                                  </div>
+                                  <div className="flex justify-between">
+                                    <span>Duration</span>
+                                    <span className="font-medium">{formatDuration(suggestion.durationMins)}</span>
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+
+                            <div className="flex gap-3">
+                              <Button
+                                variant="secondary"
+                                className="flex-1"
+                                onClick={() => {
+                                  setSelectedSuggestion(null);
+                                  setShowComparison(false);
+                                }}
+                              >
+                                Back
+                              </Button>
+                              <Button
+                                className="flex-1 bg-purple-600 hover:bg-purple-700"
+                                leftIcon={<Check className="w-4 h-4" />}
+                                onClick={() => {
+                                  handleReplaceItem({
+                                    id: suggestion.id,
+                                    name: suggestion.name,
+                                    type: suggestion.type,
+                                    durationMins: suggestion.durationMins,
+                                    cost: suggestion.cost,
+                                    rating: suggestion.rating,
+                                    image: suggestion.image,
+                                    isLocalGem: suggestion.isLocalGem,
+                                  });
+                                  setShowSmartReplace(false);
+                                  setSelectedSuggestion(null);
+                                  setShowComparison(false);
+                                  setCurrentItemForReplace(null);
+                                }}
+                              >
+                                Replace
+                              </Button>
+                            </div>
+                          </div>
+                        );
+                      })()}
+                    </motion.div>
+                  )}
+                </AnimatePresence>
               </Card>
             </motion.div>
           </motion.div>
