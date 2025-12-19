@@ -66,6 +66,45 @@ const weatherAlert = {
   icon: CloudRain,
 };
 
+// Vietnamese phrases for food stops
+const vietnamesePhrases = [
+  { phrase: 'Bao nhiêu?', meaning: 'How much?', context: 'Perfect for asking prices at local spots' },
+  { phrase: 'Ngon quá!', meaning: 'Delicious!', context: 'Compliment the chef - they\'ll love it' },
+  { phrase: 'Một cái nữa', meaning: 'One more please', context: 'When you want seconds' },
+  { phrase: 'Cảm ơn', meaning: 'Thank you', context: 'Always appreciated' },
+  { phrase: 'Tính tiền', meaning: 'Check please', context: 'Ready to pay' },
+  { phrase: 'Không cay', meaning: 'Not spicy', context: 'If you can\'t handle the heat' },
+];
+
+// Contextual suggestions based on situation
+type ContextualSuggestion = {
+  id: string;
+  type: 'language' | 'timing' | 'alternative' | 'tip';
+  title: string;
+  message: string;
+  subtext?: string;
+  icon: 'language' | 'clock' | 'lightbulb' | 'utensils';
+  actionLabel?: string;
+};
+
+// Track completed trips count
+const getCompletedTripsCount = (): number => {
+  try {
+    return parseInt(localStorage.getItem('anvago_completed_trips') || '0', 10);
+  } catch {
+    return 0;
+  }
+};
+
+const incrementCompletedTrips = () => {
+  try {
+    const current = getCompletedTripsCount();
+    localStorage.setItem('anvago_completed_trips', String(current + 1));
+  } catch {
+    // Ignore localStorage errors
+  }
+};
+
 export default function Trip() {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -84,10 +123,13 @@ export default function Trip() {
   const [showTransportModal, setShowTransportModal] = useState(false);
   const [showWeatherAlert, setShowWeatherAlert] = useState(true);
   const [showRerouteOffer, setShowRerouteOffer] = useState(false);
-  const [rerouteAccepted, setRerouteAccepted] = useState(false);
   const [currentTime, _setCurrentTime] = useState('10:45');
   const [mapExpanded, setMapExpanded] = useState(false);
   const [showTimeline, setShowTimeline] = useState(true);
+
+  // Smart suggestion state
+  const [showContextualSuggestion, setShowContextualSuggestion] = useState(false);
+  const [currentSuggestion, setCurrentSuggestion] = useState<ContextualSuggestion | null>(null);
 
   // Rating state
   const [showDayRatingModal, setShowDayRatingModal] = useState(false);
@@ -181,15 +223,96 @@ export default function Trip() {
     return () => clearInterval(timer);
   }, []);
 
-  // Show reroute offer after weather alert
+  // DEMO MODE: Sequential triggers - only one at a time
+  // Track which demo step we've shown
+  const [demoStep, setDemoStep] = useState(0);
+  const [isCompletingStop, setIsCompletingStop] = useState(false);
+  // 0 = nothing shown yet
+  // 1 = showed Vietnamese lesson
+  // 2 = showed "running late"
+  // 3 = showed 43 Factory Coffee
+  // 4 = showed data collection
+
   useEffect(() => {
-    if (showWeatherAlert && !rerouteAccepted) {
-      const timer = setTimeout(() => {
+    // Don't show anything if day/trip is completed or something is already showing
+    if (tripProgress?.dayCompleted || tripProgress?.tripCompleted) return;
+    if (showContextualSuggestion || showRerouteOffer) return;
+
+    let timer: ReturnType<typeof setTimeout>;
+
+    // Step 0 → 1: After 1st stop, show Vietnamese lesson
+    if (completedCount >= 1 && demoStep === 0) {
+      timer = setTimeout(() => {
+        const phrase = vietnamesePhrases[0];
+        setCurrentSuggestion({
+          id: 'demo-language',
+          type: 'language',
+          title: 'Quick Vietnamese Lesson',
+          message: `"${phrase.phrase}" means "${phrase.meaning}"`,
+          subtext: phrase.context,
+          icon: 'language',
+        });
+        setShowContextualSuggestion(true);
+        setDemoStep(1);
+      }, 1500);
+    }
+    // Step 1 → 2: After 2nd stop, show "running late"
+    else if (completedCount >= 2 && demoStep === 1) {
+      timer = setTimeout(() => {
+        setCurrentSuggestion({
+          id: 'demo-late',
+          type: 'timing',
+          title: 'Running a bit behind?',
+          message: 'Bánh mì is really convenient to eat on the go! There\'s a great spot nearby.',
+          subtext: 'Skip the wait, keep exploring',
+          icon: 'utensils',
+          actionLabel: 'Show Quick Eats',
+        });
+        setShowContextualSuggestion(true);
+        setDemoStep(2);
+      }, 1500);
+    }
+    // Step 2 → 3: After 3rd stop, show 43 Factory Coffee
+    else if (completedCount >= 3 && demoStep === 2) {
+      timer = setTimeout(() => {
         setShowRerouteOffer(true);
-      }, 2000);
+        setDemoStep(3);
+      }, 1500);
+    }
+
+    return () => {
+      if (timer) clearTimeout(timer);
+    };
+  }, [completedCount, demoStep, showContextualSuggestion, showRerouteOffer, tripProgress?.dayCompleted, tripProgress?.tripCompleted]);
+
+  // Trip completed → Show data collection modal
+  useEffect(() => {
+    if (tripProgress?.tripCompleted && demoStep < 4) {
+      const timer = setTimeout(() => {
+        setDemoStep(4);
+        incrementCompletedTrips();
+        handleOpenDataCollection();
+      }, 1500);
       return () => clearTimeout(timer);
     }
-  }, [showWeatherAlert, rerouteAccepted]);
+  }, [tripProgress?.tripCompleted, demoStep]);
+
+  // Dismiss contextual suggestion
+  const handleDismissSuggestion = () => {
+    setShowContextualSuggestion(false);
+    setCurrentSuggestion(null);
+  };
+
+  // Get icon for contextual suggestion
+  const getSuggestionIcon = (iconType: ContextualSuggestion['icon']) => {
+    switch (iconType) {
+      case 'language': return '🗣️';
+      case 'clock': return '⏰';
+      case 'utensils': return '🍜';
+      case 'lightbulb': return '💡';
+      default: return '✨';
+    }
+  };
 
   // Sync progress to API
   const syncToApi = useCallback(async (action: 'advance' | 'complete' | 'day_advance') => {
@@ -224,7 +347,13 @@ export default function Trip() {
 
   const handleMarkComplete = async (stopId: string) => {
     const stop = stops.find(s => s.id === stopId);
+
+    // Add delay for demo purposes - makes it feel more intentional
+    setIsCompletingStop(true);
+    await new Promise(resolve => setTimeout(resolve, 1200));
+
     markStopComplete(tripId, stopId);
+    setIsCompletingStop(false);
     toast.success(`${stop?.name} completed!`);
 
     // Sync to API
@@ -241,6 +370,13 @@ export default function Trip() {
   };
 
   const handleRestartTrip = async () => {
+    // Reset demo state so cards appear again
+    setDemoStep(0);
+    setShowContextualSuggestion(false);
+    setCurrentSuggestion(null);
+    setShowRerouteOffer(false);
+    setShowWeatherAlert(true);
+
     resetTrip(tripId);
     toast.success('Trip restarted! Enjoy your adventure again!');
 
@@ -263,7 +399,6 @@ export default function Trip() {
       replaceStop(tripId, beachClubStop.id, alternativeStop);
     }
     setShowRerouteOffer(false);
-    setRerouteAccepted(true);
     setShowWeatherAlert(false);
     toast.success('Itinerary updated! 43 Factory Coffee swapped in.');
   };
@@ -917,9 +1052,10 @@ export default function Trip() {
                   <Button
                     fullWidth
                     onClick={() => handleMarkComplete(currentStop.id)}
-                    leftIcon={<CheckCircle2 className="w-4 h-4" />}
+                    disabled={isCompletingStop}
+                    leftIcon={isCompletingStop ? <Loader2 className="w-4 h-4 animate-spin" /> : <CheckCircle2 className="w-4 h-4" />}
                   >
-                    Complete
+                    {isCompletingStop ? 'Completing...' : 'Complete'}
                   </Button>
                   <Button
                     variant="secondary"
@@ -1135,6 +1271,101 @@ export default function Trip() {
                   </div>
                   <button
                     onClick={() => setShowRerouteOffer(false)}
+                    className="p-1 hover:bg-gray-100 rounded-lg transition-colors"
+                  >
+                    <X className="w-5 h-5 text-gray-400" />
+                  </button>
+                </div>
+              </Card>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Contextual Suggestion - Bottom Floating Card */}
+      <AnimatePresence>
+        {showContextualSuggestion && currentSuggestion && !showRerouteOffer && (
+          <motion.div
+            initial={{ y: 100, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            exit={{ y: 100, opacity: 0 }}
+            transition={{ type: 'spring', damping: 25, stiffness: 300 }}
+            className="fixed bottom-0 left-0 right-0 z-40 p-4 pb-6"
+          >
+            <div className="max-w-4xl mx-auto">
+              <Card className={`border-2 shadow-xl ${
+                currentSuggestion.type === 'language'
+                  ? 'bg-gradient-to-br from-white to-indigo-50 border-indigo-400'
+                  : currentSuggestion.type === 'timing'
+                  ? 'bg-gradient-to-br from-white to-orange-50 border-orange-400'
+                  : 'bg-gradient-to-br from-white to-sky-50 border-sky-400'
+              }`}>
+                <div className="flex items-start gap-4">
+                  <div className={`w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0 shadow-lg text-2xl ${
+                    currentSuggestion.type === 'language'
+                      ? 'bg-indigo-500'
+                      : currentSuggestion.type === 'timing'
+                      ? 'bg-orange-500'
+                      : 'bg-sky-500'
+                  }`}>
+                    {getSuggestionIcon(currentSuggestion.icon)}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 mb-1">
+                      <h3 className={`font-bold ${
+                        currentSuggestion.type === 'language'
+                          ? 'text-indigo-600'
+                          : currentSuggestion.type === 'timing'
+                          ? 'text-orange-600'
+                          : 'text-sky-600'
+                      }`}>
+                        {currentSuggestion.title}
+                      </h3>
+                      <Badge variant={currentSuggestion.type === 'language' ? 'secondary' : 'warning'} className="text-[10px]">
+                        {currentSuggestion.type === 'language' ? 'Learn' : currentSuggestion.type === 'timing' ? 'Tip' : 'Info'}
+                      </Badge>
+                    </div>
+                    <p className="text-sm text-gray-700 mb-1">
+                      {currentSuggestion.message}
+                    </p>
+                    {currentSuggestion.subtext && (
+                      <p className="text-xs text-gray-500 mb-3">
+                        {currentSuggestion.subtext}
+                      </p>
+                    )}
+
+                    <div className="flex gap-3">
+                      {currentSuggestion.actionLabel ? (
+                        <>
+                          <Button
+                            onClick={() => {
+                              toast.success('Feature coming soon!');
+                              handleDismissSuggestion();
+                            }}
+                            className="flex-1"
+                          >
+                            {currentSuggestion.actionLabel}
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            onClick={handleDismissSuggestion}
+                            className="flex-1"
+                          >
+                            Dismiss
+                          </Button>
+                        </>
+                      ) : (
+                        <Button
+                          onClick={handleDismissSuggestion}
+                          className="flex-1"
+                        >
+                          Got it!
+                        </Button>
+                      )}
+                    </div>
+                  </div>
+                  <button
+                    onClick={handleDismissSuggestion}
                     className="p-1 hover:bg-gray-100 rounded-lg transition-colors"
                   >
                     <X className="w-5 h-5 text-gray-400" />
