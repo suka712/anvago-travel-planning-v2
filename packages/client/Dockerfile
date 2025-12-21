@@ -34,9 +34,10 @@ FROM nginx:alpine AS production
 # Copy built assets
 COPY --from=builder /app/packages/client/dist /usr/share/nginx/html
 
-# Copy nginx config directly
-COPY packages/client/nginx.conf /etc/nginx/conf.d/default.conf
+# Copy nginx config as template (needs PORT substitution)
+COPY packages/client/nginx.conf /etc/nginx/nginx.conf.template
 
 EXPOSE 80
 
-CMD ["nginx", "-g", "daemon off;"]
+# envsubst replaces $PORT, then start nginx
+CMD ["/bin/sh", "-c", "envsubst '$$PORT' < /etc/nginx/nginx.conf.template > /etc/nginx/conf.d/default.conf && nginx -g 'daemon off;'"]
