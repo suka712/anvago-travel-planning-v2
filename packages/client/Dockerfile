@@ -34,14 +34,9 @@ FROM nginx:alpine AS production
 # Copy built assets
 COPY --from=builder /app/packages/client/dist /usr/share/nginx/html
 
-# Copy nginx config template
-COPY packages/client/nginx.conf /etc/nginx/templates/default.conf.template
+# Copy nginx config directly
+COPY packages/client/nginx.conf /etc/nginx/conf.d/default.conf
 
-# Railway provides PORT env variable, default to 80
-ENV PORT=80
+EXPOSE 80
 
-EXPOSE ${PORT}
-
-# nginx:alpine image automatically processes templates with envsubst
-# This replaces ${PORT} in the config with the actual PORT value
-CMD ["sh", "-c", "envsubst '$PORT' < /etc/nginx/templates/default.conf.template > /etc/nginx/conf.d/default.conf && nginx -g 'daemon off;'"]
+CMD ["nginx", "-g", "daemon off;"]
